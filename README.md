@@ -1,7 +1,7 @@
 Hello this is CiphAnon Studios Full Library of Website Links And More
 
 
- To Keep All Websites Un-Blocked up my Bookmarklet Bypass Script
+ To Keep All Websites Un-Blocked use my Bookmarklet Bypass Script
 
  - replace the url with the url you would like to use at the f.src="" area
 
