@@ -1,0 +1,243 @@
+javascript:(()=>{const ID="ciphAnonPanel",MIN="ciphAnonMini",KEY="ciphAnonPanelSettings",CONSOLE="ciphAnonDevConsole",DEFAULT_DESTINATION="https://ciphanonstudios.github.io/Eaglercraft-1.8-v2/",DEFAULT_DELAY=3000;const old=document.getElementById(ID);if(old){old.style.display=old.style.display==="none"?"flex":"none";return}const oldMini=document.getElementById(MIN);if(oldMini)oldMini.remove();let saved={};try{saved=JSON.parse(localStorage.getItem(KEY)||"{}")}catch(e){saved={}}
+const p=document.createElement("div"),bar=document.createElement("div"),title=document.createElement("div"),tools=document.createElement("div"),body=document.createElement("div"),frame=document.createElement("iframe"),resize=document.createElement("div"),mini=document.createElement("button");
+p.id=ID;
+Object.assign(p.style,{position:"fixed",left:saved.left||"80px",top:saved.top||"80px",width:saved.width||"820px",height:saved.height||"520px",minWidth:"360px",minHeight:"220px",background:"#fff",border:"1px solid rgba(255,106,0,.65)",borderRadius:"14px",zIndex:"2147483647",display:"flex",flexDirection:"column",overflow:"hidden",boxShadow:"0 20px 60px rgba(0,0,0,.35)",fontFamily:"Inter,Arial,sans-serif",transition:"box-shadow .2s,opacity .2s",opacity:saved.opacity||"1"});
+bar.style.cssText="height:42px;flex:none;background:#181818;color:#fff;display:flex;align-items:center;justify-content:space-between;padding:0 10px;box-sizing:border-box;cursor:move;user-select:none";
+title.style.cssText="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:700";
+title.innerHTML='<span style="width:9px;height:9px;border-radius:50%;background:#ff6a00;display:inline-block;box-shadow:0 0 10px #ff6a00"></span><span>CiphAnon Studios</span><span style="opacity:.45;font-weight:400">Panel</span>';
+tools.style.cssText="display:flex;gap:5px;align-items:center";
+function btn(id,text,tip){const b=document.createElement("button");b.id=id;b.textContent=text;b.title=tip;b.style.cssText="width:30px;height:28px;border:0;border-radius:7px;background:#292929;color:#fff;cursor:pointer;font-size:14px;transition:.15s";b.onmouseenter=()=>b.style.background="#ff6a00";b.onmouseleave=()=>b.style.background="#292929";return b}
+const reload=btn("capReload","↻","Reload");
+const theme=btn("capTheme","☾","Toggle theme");
+const opacity=btn("capOpacity","◐","Opacity");
+const miniBtn=btn("capMini","−","Minimize");
+const full=btn("capFull","⛶","Fullscreen");
+const consoleBtn=btn("capConsole","⌘","Dev console");
+const close=btn("capClose","×","Close");
+[reload,theme,opacity,miniBtn,full,consoleBtn,close].forEach(x=>tools.appendChild(x));
+bar.append(title,tools);
+body.style.cssText="flex:1;position:relative;display:flex;flex-direction:column;overflow:hidden";
+const controls=document.createElement("div");
+controls.style.cssText="height:38px;flex:none;background:#f5f5f5;border-bottom:1px solid #ddd;display:flex;align-items:center;gap:6px;padding:5px 8px;box-sizing:border-box";
+function action(text,tip,fn){const b=document.createElement("button");b.textContent=text;b.title=tip;b.className="ciphAction";b.style.cssText="border:1px solid #ddd;background:#fff;border-radius:6px;height:27px;padding:0 9px;cursor:pointer;font-size:12px";b.onclick=fn;b.onmouseenter=()=>b.style.borderColor="#ff6a00";b.onmouseleave=()=>b.style.borderColor="#ddd";return b}
+const status=document.createElement("span");
+status.style.cssText="margin-left:auto;font-size:11px;color:#888;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:220px";
+status.textContent="Starting...";
+controls.append(action("↗","Open current page in new tab",()=>window.open(location.href,"_blank")),action("⧉","Copy current page URL",async()=>{try{await navigator.clipboard.writeText(location.href);status.textContent="URL copied"}catch(e){status.textContent="Copy unavailable"}}),action("TL","Top-left",()=>move("12px","60px")),action("TR","Top-right",()=>move("calc(100vw - "+p.offsetWidth+"px - 12px)","60px")),action("BL","Bottom-left",()=>move("12px","calc(100vh - "+p.offsetHeight+"px - 12px)")),action("BR","Bottom-right",()=>move("calc(100vw - "+p.offsetWidth+"px - 12px)","calc(100vh - "+p.offsetHeight+"px - 12px)")));
+controls.appendChild(status);
+frame.style.cssText="flex:1;width:100%;height:100%;border:0;background:#fff";
+frame.setAttribute("allow","fullscreen");
+resize.style.cssText="position:absolute;right:0;bottom:0;width:16px;height:16px;cursor:nwse-resize;background:linear-gradient(135deg,transparent 45%,#ff6a00 46%,#ff6a00 55%,transparent 56%)";
+body.append(controls,frame,resize);
+p.append(bar,body);
+document.body.appendChild(p);
+let dark=saved.dark==="1",fs=false,drag=false,resizing=false,dx=0,dy=0,rw=0,rh=0,rx=0,ry=0,devConsole=null,commandInput=null,commandMenu=null,switchTimer=null;
+const defaultBinds={"ctrl+shift+p":"panel","ctrl+shift+c":"console","ctrl+shift+m":"minimize","ctrl+shift+f":"fullscreen","ctrl+shift+r":"reload","escape":"close"};
+const binds=Object.assign({},defaultBinds,saved.binds||{});
+let destinationUrl=saved.destinationUrl||DEFAULT_DESTINATION;
+let startupDelay=Number.isFinite(Number(saved.startupDelay))?Number(saved.startupDelay):DEFAULT_DELAY;
+function getState(){return{left:p.style.left,top:p.style.top,width:p.style.width,height:p.style.height,opacity:p.style.opacity,dark:dark?"1":"0",binds:binds,destinationUrl:frame.dataset.destination||destinationUrl,startupDelay:startupDelay}}
+function save(){localStorage.setItem(KEY,JSON.stringify(getState()))}
+function move(l,t){p.style.left=l;p.style.top=t;requestAnimationFrame(save)}
+function applyTheme(){
+const bg=dark?"#161616":"#fff",fg=dark?"#eee":"#222",cb=dark?"#202020":"#f5f5f5",border=dark?"#333":"#ddd";
+p.style.background=bg;body.style.background=bg;controls.style.background=cb;controls.style.borderColor=border;status.style.color=dark?"#777":"#888";frame.style.background=bg;
+document.querySelectorAll("#"+ID+" .ciphAction").forEach(x=>{x.style.background=dark?"#222":"#fff";x.style.color=fg;x.style.borderColor=border});
+if(devConsole)applyConsoleTheme();save()
+}
+function applyConsoleTheme(){
+if(!devConsole)return;
+const bg=dark?"#111":"#f7f7f7",fg=dark?"#eee":"#222",border=dark?"#333":"#ddd";
+devConsole.style.background=bg;devConsole.style.color=fg;
+if(commandInput){commandInput.style.background=dark?"#1d1d1d":"#fff";commandInput.style.color=fg;commandInput.style.borderColor=border}
+if(commandMenu){commandMenu.style.background=dark?"#191919":"#fff";commandMenu.style.color=fg;commandMenu.style.borderColor=border}
+devConsole.querySelectorAll(".ciphConsoleLine").forEach(x=>x.style.borderColor=border)
+}
+function addConsoleLine(text,type){
+if(!devConsole)return;
+const line=document.createElement("div");
+line.className="ciphConsoleLine";
+line.style.cssText="padding:3px 0;border-bottom:1px solid #ddd;white-space:pre-wrap;word-break:break-word;font-size:12px;line-height:1.45";
+if(type==="error")line.style.color="#e04848";
+if(type==="success")line.style.color="#16a05d";
+if(type==="command")line.style.color="#ff6a00";
+line.textContent=text;
+const output=devConsole.querySelector(".ciphConsoleOutput");
+output.appendChild(line);
+output.scrollTop=output.scrollHeight
+}
+function closeConsole(){if(devConsole){devConsole.remove();devConsole=null;commandInput=null;commandMenu=null}}
+function createLoadingPage(){
+frame.srcdoc='<!doctype html><html><head><meta charset="utf-8"><title>Loading</title><style>*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;font-family:Arial,sans-serif;background:#181818;color:#fff}body{display:flex;align-items:center;justify-content:center}.wrap{text-align:center}.logo{width:18px;height:18px;margin:0 auto 15px;border-radius:50%;background:#ff6a00;box-shadow:0 0 22px #ff6a00;animation:pulse 1.2s infinite}.title{font-size:20px;font-weight:700}.sub{margin-top:8px;color:#aaa;font-size:12px}.loader{width:190px;height:4px;margin:22px auto 0;border-radius:8px;background:#333;overflow:hidden}.loader span{display:block;width:45%;height:100%;background:#ff6a00;border-radius:8px;animation:load 1.2s infinite}@keyframes pulse{50%{transform:scale(1.35);opacity:.65}}@keyframes load{0%{transform:translateX(-100%)}100%{transform:translateX(430%)}}</style></head><body><div class="wrap"><div class="logo"></div><div class="title">CiphAnon Studios</div><div class="sub">Preparing Eaglercraft...</div><div class="loader"><span></span></div></div></body></html>';
+status.textContent="Loading Eaglercraft..."
+}
+function beginStartup(destination,delay){
+if(switchTimer)clearTimeout(switchTimer);
+frame.dataset.destination=destination||DEFAULT_DESTINATION;
+frame.dataset.startup="1";
+createLoadingPage();
+switchTimer=setTimeout(()=>{frame.dataset.startup="0";frame.src=frame.dataset.destination;frame.srcdoc="";status.textContent="Eaglercraft loaded"},Math.max(0,Number(delay)||0))
+}
+function reloadStartup(){beginStartup(frame.dataset.destination||destinationUrl,startupDelay)}
+const commands=[["/help","Show all available commands"],["/theme","Toggle light and dark mode"],["/reload","Restart the loading page"],["/opacity","Cycle panel opacity"],["/fullscreen","Toggle fullscreen"],["/minimize","Minimize the panel"],["/close","Close the panel"],["/console","Open the dev console"],["/destination URL","Set the destination website"],["/delay milliseconds","Set the loading delay"],["/top-left","Move panel to the top-left"],["/top-right","Move panel to the top-right"],["/bottom-left","Move panel to the bottom-left"],["/bottom-right","Move panel to the bottom-right"],["/set width 900px","Change panel width"],["/set height 600px","Change panel height"],["/set opacity .8","Set panel opacity"],["/bind ctrl+shift+p console","Create or update a keybind"],["/unbind ctrl+shift+p","Remove a keybind"],["/binds","Show current keybinds"],["/clear","Clear console output"]];
+function updateCommandMenu(value){
+if(!commandMenu)return;
+const query=value.toLowerCase().startsWith("/")?value.toLowerCase():"/"+value.toLowerCase();
+const matches=commands.filter(x=>x[0].toLowerCase().startsWith(query));
+commandMenu.innerHTML="";
+if(!value||!value.startsWith("/")||!matches.length){commandMenu.style.display="none";return}
+matches.forEach((item,index)=>{const b=document.createElement("button");b.type="button";b.dataset.command=item[0];b.dataset.active=index===0?"1":"0";b.style.cssText="display:block;width:100%;text-align:left;border:0;background:"+((index===0)?"#ff6a00":(dark?"#191919":"#fff"))+";color:"+(index===0?"#fff":(dark?"#eee":"#222"))+";padding:7px 9px;cursor:pointer;font:12px monospace";b.innerHTML="<strong>"+item[0]+"</strong><span style='opacity:.7;margin-left:8px'>"+item[1]+"</span>";b.onclick=()=>{commandInput.value=item[0]+" ";commandInput.focus();updateCommandMenu(commandInput.value)};commandMenu.appendChild(b)});
+commandMenu.style.display="block"
+}
+function normalizeKey(e){
+const parts=[];
+if(e.ctrlKey)parts.push("ctrl");
+if(e.shiftKey)parts.push("shift");
+if(e.altKey)parts.push("alt");
+if(e.metaKey)parts.push("meta");
+let key=e.key.toLowerCase();
+if(key===" ")key="space";
+if(!["control","shift","alt","meta"].includes(key))parts.push(key);
+return parts.join("+")
+}
+function runAction(name){if(name==="panel")p.style.display=p.style.display==="none"?"flex":"none";if(name==="console")createConsole();if(name==="minimize")miniBtn.click();if(name==="fullscreen")full.click();if(name==="reload")reloadStartup();if(name==="close")close.click()}
+function runCommand(raw){
+const parts=raw.trim().split(/\s+/),command=(parts.shift()||"").toLowerCase(),args=parts;
+if(command==="/help"){commands.forEach(x=>addConsoleLine(x[0]+" — "+x[1],""));return}
+if(command==="/theme"){theme.click();return}
+if(command==="/reload"){reloadStartup();addConsoleLine("Loading screen restarted.","success");return}
+if(command==="/opacity"){opacity.click();return}
+if(command==="/fullscreen"){full.click();return}
+if(command==="/minimize"){miniBtn.click();return}
+if(command==="/close"){close.click();return}
+if(command==="/console"){addConsoleLine("Console is already open.","");return}
+if(command==="/top-left"){move("12px","60px");return}
+if(command==="/top-right"){move("calc(100vw - "+p.offsetWidth+"px - 12px)","60px");return}
+if(command==="/bottom-left"){move("12px","calc(100vh - "+p.offsetHeight+"px - 12px)");return}
+if(command==="/bottom-right"){move("calc(100vw - "+p.offsetWidth+"px - 12px)","calc(100vh - "+p.offsetHeight+"px - 12px)");return}
+if(command==="/destination"){
+const url=args.join(" ").trim();
+try{new URL(url);destinationUrl=url;frame.dataset.destination=url;save();addConsoleLine("Destination updated. Use /reload to apply it.","success")}catch(e){addConsoleLine("Enter a valid URL.","error")}
+return
+}
+if(command==="/delay"){
+const value=Number(args[0]);
+if(!Number.isFinite(value)||value<0){addConsoleLine("Usage: /delay 3000","error");return}
+startupDelay=value;save();addConsoleLine("Delay updated. Use /reload to apply it.","success");return
+}
+if(command==="/set"){
+const property=(args.shift()||"").toLowerCase(),value=args.join(" ");
+if(property==="width"){p.style.width=value;save();return}
+if(property==="height"){p.style.height=value;save();return}
+if(property==="opacity"){const n=Number(value);if(n>=.1&&n<=1){p.style.opacity=String(n);save();return}}
+addConsoleLine("Usage: /set width 900px, /set height 600px, or /set opacity .8","error");return
+}
+if(command==="/bind"){
+const key=(args.shift()||"").toLowerCase(),actionName=(args.shift()||"").toLowerCase();
+if(!key||!["panel","console","minimize","fullscreen","reload","close"].includes(actionName)){addConsoleLine("Usage: /bind ctrl+shift+p console","error");return}
+binds[key]=actionName;save();addConsoleLine("Binding saved.","success");return
+}
+if(command==="/unbind"){const key=(args.shift()||"").toLowerCase();delete binds[key];save();addConsoleLine("Binding removed.","success");return}
+if(command==="/binds"){Object.keys(binds).forEach(key=>addConsoleLine(key+" → "+binds[key],""));return}
+if(command==="/clear"){devConsole.querySelector(".ciphConsoleOutput").innerHTML="";return}
+addConsoleLine("Unknown command. Type /help.","error")
+}
+function createConsole(){
+if(devConsole){commandInput.focus();return}
+devConsole=document.createElement("div");
+devConsole.id=CONSOLE;
+devConsole.style.cssText="position:absolute;left:10px;right:10px;bottom:10px;height:260px;z-index:20;border:1px solid #ff6a00;border-radius:10px;background:#f7f7f7;color:#222;box-shadow:0 12px 35px rgba(0,0,0,.3);display:flex;flex-direction:column;overflow:hidden";
+const header=document.createElement("div");
+header.style.cssText="height:31px;flex:none;background:#181818;color:#fff;display:flex;align-items:center;justify-content:space-between;padding:0 9px;font-size:12px;font-weight:700";
+const headerTitle=document.createElement("span");
+headerTitle.textContent="CiphAnon Dev Console";
+const consoleClose=document.createElement("button");
+consoleClose.textContent="×";
+consoleClose.style.cssText="border:0;background:transparent;color:#fff;font-size:18px;cursor:pointer";
+consoleClose.onclick=closeConsole;
+header.append(headerTitle,consoleClose);
+const output=document.createElement("div");
+output.className="ciphConsoleOutput";
+output.style.cssText="flex:1;overflow:auto;padding:8px;font-family:monospace";
+const inputRow=document.createElement("div");
+inputRow.style.cssText="position:relative;display:flex;gap:6px;padding:7px;border-top:1px solid #ddd";
+const prompt=document.createElement("span");
+prompt.textContent=">";
+prompt.style.cssText="padding:7px 0 0 2px;color:#ff6a00;font-weight:700";
+commandInput=document.createElement("input");
+commandInput.type="text";
+commandInput.placeholder="Type / for commands...";
+commandInput.autocomplete="off";
+commandInput.spellcheck=false;
+commandInput.style.cssText="flex:1;height:30px;border:1px solid #ddd;border-radius:6px;padding:0 9px;font:12px monospace;outline:none";
+commandMenu=document.createElement("div");
+commandMenu.style.cssText="display:none;position:absolute;left:7px;right:7px;bottom:45px;max-height:180px;overflow:auto;border:1px solid #ddd;border-radius:7px;background:#fff;box-shadow:0 8px 25px rgba(0,0,0,.2);z-index:30";
+inputRow.append(prompt,commandInput,commandMenu);
+devConsole.append(header,output,inputRow);
+body.appendChild(devConsole);
+applyConsoleTheme();
+addConsoleLine("Console ready. Type /help for commands.","success");
+addConsoleLine("Destination: "+(frame.dataset.destination||DEFAULT_DESTINATION),"");
+addConsoleLine("Loading delay: "+startupDelay+" ms","");
+commandInput.focus();
+commandInput.addEventListener("input",()=>updateCommandMenu(commandInput.value));
+commandInput.addEventListener("keydown",e=>{
+if(e.key==="Escape"){closeConsole();return}
+if(e.key==="ArrowDown"||e.key==="ArrowUp"){
+const items=[...commandMenu.querySelectorAll("button")];
+if(!items.length)return;
+e.preventDefault();
+const current=items.findIndex(x=>x.dataset.active==="1");
+let next=e.key==="ArrowDown"?current+1:current-1;
+if(next<0)next=items.length-1;
+if(next>=items.length)next=0;
+items.forEach(x=>{x.dataset.active="0";x.style.background=dark?"#191919":"#fff"});
+items[next].dataset.active="1";
+items[next].style.background="#ff6a00";
+return
+}
+if(e.key==="Enter"){
+const value=commandInput.value.trim();
+if(value){addConsoleLine("> "+value,"command");runCommand(value)}
+commandInput.value="";
+commandMenu.style.display="none";
+return
+}
+if(e.key==="Tab"){
+const active=commandMenu.querySelector('button[data-active="1"]');
+if(active){e.preventDefault();commandInput.value=active.dataset.command+" ";updateCommandMenu(commandInput.value)}
+}
+})
+}
+bar.addEventListener("mousedown",e=>{if(e.target.closest("button"))return;drag=true;dx=e.clientX-p.offsetLeft;dy=e.clientY-p.offsetTop;frame.style.pointerEvents="none"});
+document.addEventListener("mousemove",e=>{if(drag){p.style.left=Math.max(0,Math.min(window.innerWidth-p.offsetWidth,e.clientX-dx))+"px";p.style.top=Math.max(0,Math.min(window.innerHeight-p.offsetHeight,e.clientY-dy))+"px"}if(resizing){p.style.width=Math.max(360,rw+(e.clientX-rx))+"px";p.style.height=Math.max(220,rh+(e.clientY-ry))+"px"}});
+document.addEventListener("mouseup",()=>{if(drag||resizing)save();drag=false;resizing=false;frame.style.pointerEvents="auto"});
+resize.addEventListener("mousedown",e=>{resizing=true;rw=p.offsetWidth;rh=p.offsetHeight;rx=e.clientX;ry=e.clientY;frame.style.pointerEvents="none";e.preventDefault()});
+reload.onclick=()=>reloadStartup();
+theme.onclick=()=>{dark=!dark;applyTheme();status.textContent=dark?"Dark mode":"Light mode"};
+opacity.onclick=()=>{const values=["1",".9",".8",".7",".6"],current=values.indexOf(p.style.opacity);p.style.opacity=values[(current+1)%values.length];save();status.textContent="Opacity: "+Math.round(parseFloat(p.style.opacity)*100)+"%"};
+miniBtn.onclick=()=>{p.style.display="none";mini.id=MIN;mini.textContent="C";mini.title="Restore panel";mini.style.cssText="position:fixed;right:16px;bottom:16px;width:46px;height:46px;border:0;border-radius:13px;background:#181818;color:#ff6a00;font-weight:800;font-size:16px;z-index:2147483647;cursor:pointer;box-shadow:0 10px 30px rgba(0,0,0,.3)";mini.onclick=()=>{p.style.display="flex";mini.remove()};document.body.appendChild(mini)};
+full.onclick=()=>{if(!fs){p.dataset.prev=JSON.stringify({l:p.style.left,t:p.style.top,w:p.style.width,h:p.style.height});p.style.left="0";p.style.top="0";p.style.width="100vw";p.style.height="100vh";p.style.borderRadius="0";fs=true}else{const q=JSON.parse(p.dataset.prev||"{}");p.style.left=q.l||"80px";p.style.top=q.t||"80px";p.style.width=q.w||"820px";p.style.height=q.h||"520px";p.style.borderRadius="14px";fs=false}save()};
+consoleBtn.onclick=createConsole;
+close.onclick=()=>{if(switchTimer)clearTimeout(switchTimer);save();closeConsole();p.remove();const x=document.getElementById(MIN);if(x)x.remove()};
+document.addEventListener("keydown",e=>{
+if(e.target.tagName==="INPUT"||e.target.tagName==="TEXTAREA")return;
+const key=normalizeKey(e),actionName=binds[key];
+if(actionName){e.preventDefault();runAction(actionName);return}
+if(e.key==="/"){e.preventDefault();createConsole();return}
+if(e.key==="Escape"){closeConsole();p.remove();const x=document.getElementById(MIN);if(x)x.remove();return}
+if(e.key.toLowerCase()==="p")p.style.display=p.style.display==="none"?"flex":"none";
+if(e.key.toLowerCase()==="m")miniBtn.click();
+if(e.key.toLowerCase()==="f")full.click();
+if(e.key.toLowerCase()==="r")reloadStartup()
+});
+window.addEventListener("resize",()=>{
+if(p.style.left.includes("calc")||p.style.top.includes("calc"))return;
+p.style.left=Math.max(0,Math.min(parseInt(p.style.left)||0,window.innerWidth-p.offsetWidth))+"px";
+p.style.top=Math.max(0,Math.min(parseInt(p.style.top)||0,window.innerHeight-p.offsetHeight))+"px"
+});
+applyTheme();
+frame.dataset.destination=destinationUrl;
+beginStartup(destinationUrl,startupDelay);
+save();
+})();void 0
