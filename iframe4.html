@@ -1,0 +1,623 @@
+javascript:(()=>{const ID="ciphAnonPanel",MIN="ciphAnonMini",KEY="ciphAnonPanelSettings",CONSOLE="ciphAnonDevConsole";const old=document.getElementById(ID);if(old){old.style.display=old.style.display==="none"?"flex":"none";return}const oldMini=document.getElementById(MIN);if(oldMini)oldMini.remove();
+let saved={};try{saved=JSON.parse(localStorage.getItem(KEY)||"{}")}catch(e){saved={}}
+const p=document.createElement("div"),bar=document.createElement("div"),title=document.createElement("div"),tools=document.createElement("div"),body=document.createElement("div"),frame=document.createElement("iframe"),resize=document.createElement("div"),mini=document.createElement("button");
+p.id=ID;
+Object.assign(p.style,{
+position:"fixed",
+left:saved.left||"80px",
+top:saved.top||"80px",
+width:saved.width||"820px",
+height:saved.height||"520px",
+minWidth:"360px",
+minHeight:"220px",
+background:"#fff",
+border:"1px solid rgba(255,106,0,.65)",
+borderRadius:"14px",
+zIndex:"2147483647",
+display:"flex",
+flexDirection:"column",
+overflow:"hidden",
+boxShadow:"0 20px 60px rgba(0,0,0,.35)",
+fontFamily:"Inter,Arial,sans-serif",
+transition:"box-shadow .2s,opacity .2s",
+opacity:saved.opacity||"1"
+});
+bar.style.cssText="height:42px;flex:none;background:#181818;color:#fff;display:flex;align-items:center;justify-content:space-between;padding:0 10px;box-sizing:border-box;cursor:move;user-select:none";
+title.style.cssText="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:700";
+title.innerHTML='<span style="width:9px;height:9px;border-radius:50%;background:#ff6a00;display:inline-block;box-shadow:0 0 10px #ff6a00"></span><span>CiphAnon Studios</span><span style="opacity:.45;font-weight:400">Panel</span>';
+tools.style.cssText="display:flex;gap:5px;align-items:center";
+function btn(id,text,tip){
+const b=document.createElement("button");
+b.id=id;
+b.textContent=text;
+b.title=tip;
+b.style.cssText="width:30px;height:28px;border:0;border-radius:7px;background:#292929;color:#fff;cursor:pointer;font-size:14px;transition:.15s";
+b.onmouseenter=()=>b.style.background="#ff6a00";
+b.onmouseleave=()=>b.style.background="#292929";
+return b
+}
+const reload=btn("capReload","↻","Reload");
+const theme=btn("capTheme","☾","Toggle theme");
+const opacity=btn("capOpacity","◐","Opacity");
+const miniBtn=btn("capMini","−","Minimize");
+const full=btn("capFull","⛶","Fullscreen");
+const consoleBtn=btn("capConsole","⌘","Dev console");
+const close=btn("capClose","×","Close");
+[reload,theme,opacity,miniBtn,full,consoleBtn,close].forEach(x=>tools.appendChild(x));
+bar.append(title,tools);
+body.style.cssText="flex:1;position:relative;display:flex;flex-direction:column;overflow:hidden";
+const controls=document.createElement("div");
+controls.style.cssText="height:38px;flex:none;background:#f5f5f5;border-bottom:1px solid #ddd;display:flex;align-items:center;gap:6px;padding:5px 8px;box-sizing:border-box";
+function action(text,tip,fn){
+const b=document.createElement("button");
+b.textContent=text;
+b.title=tip;
+b.style.cssText="border:1px solid #ddd;background:#fff;border-radius:6px;height:27px;padding:0 9px;cursor:pointer;font-size:12px";
+b.onclick=fn;
+b.onmouseenter=()=>b.style.borderColor="#ff6a00";
+b.onmouseleave=()=>b.style.borderColor="#ddd";
+return b
+}
+const status=document.createElement("span");
+status.style.cssText="margin-left:auto;font-size:11px;color:#888;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:180px";
+status.textContent="Ready";
+controls.append(
+action("↗","Open current page in new tab",()=>window.open(location.href,"_blank")),
+action("⧉","Copy current page URL",async()=>{
+try{
+await navigator.clipboard.writeText(location.href);
+status.textContent="URL copied"
+}catch(e){
+status.textContent="Copy unavailable"
+}
+}),
+action("TL","Top-left",()=>move("12px","60px")),
+action("TR","Top-right",()=>move("calc(100vw - "+p.offsetWidth+"px - 12px)","60px")),
+action("BL","Bottom-left",()=>move("12px","calc(100vh - "+p.offsetHeight+"px - 12px)")),
+action("BR","Bottom-right",()=>move("calc(100vw - "+p.offsetWidth+"px - 12px)","calc(100vh - "+p.offsetHeight+"px - 12px)"))
+);
+controls.appendChild(status);
+frame.src="";
+frame.style.cssText="flex:1;width:100%;height:100%;border:0;background:#fff";
+resize.style.cssText="position:absolute;right:0;bottom:0;width:16px;height:16px;cursor:nwse-resize;background:linear-gradient(135deg,transparent 45%,#ff6a00 46%,#ff6a00 55%,transparent 56%)";
+body.append(controls,frame,resize);
+p.append(bar,body);
+document.body.appendChild(p);
+let dark=saved.dark==="1";
+let fs=false;
+let drag=false;
+let resizing=false;
+let dx=0,dy=0,rw=0,rh=0,rx=0,ry=0;
+let devConsole=null;
+let commandInput=null;
+let commandMenu=null;
+const defaultBinds={
+"ctrl+shift+p":"panel",
+"ctrl+shift+c":"console",
+"ctrl+shift+m":"minimize",
+"ctrl+shift+f":"fullscreen",
+"ctrl+shift+r":"reload",
+"escape":"close"
+};
+let binds=Object.assign({},defaultBinds,saved.binds||{});
+function getState(){
+return{
+left:p.style.left,
+top:p.style.top,
+width:p.style.width,
+height:p.style.height,
+opacity:p.style.opacity,
+dark:dark?"1":"0",
+binds:binds
+}
+}
+function save(){
+localStorage.setItem(KEY,JSON.stringify(getState()))
+}
+function move(l,t){
+p.style.left=l;
+p.style.top=t;
+requestAnimationFrame(save)
+}
+function applyTheme(){
+const bg=dark?"#161616":"#fff";
+const fg=dark?"#eee":"#222";
+const cb=dark?"#202020":"#f5f5f5";
+const border=dark?"#333":"#ddd";
+p.style.background=bg;
+body.style.background=bg;
+controls.style.background=cb;
+controls.style.borderColor=border;
+status.style.color=dark?"#777":"#888";
+frame.style.background=bg;
+document.querySelectorAll("#"+ID+" .ciphAction").forEach(x=>{
+x.style.background=dark?"#222":"#fff";
+x.style.color=fg;
+x.style.borderColor=border
+});
+if(devConsole)applyConsoleTheme();
+save()
+}
+function applyConsoleTheme(){
+if(!devConsole)return;
+const bg=dark?"#111":"#f7f7f7";
+const fg=dark?"#eee":"#222";
+const muted=dark?"#999":"#777";
+const border=dark?"#333":"#ddd";
+devConsole.style.background=bg;
+devConsole.style.color=fg;
+if(commandInput){
+commandInput.style.background=dark?"#1d1d1d":"#fff";
+commandInput.style.color=fg;
+commandInput.style.borderColor=border
+}
+if(commandMenu){
+commandMenu.style.background=dark?"#191919":"#fff";
+commandMenu.style.color=fg;
+commandMenu.style.borderColor=border
+}
+devConsole.querySelectorAll(".ciphConsoleMuted").forEach(x=>x.style.color=muted);
+devConsole.querySelectorAll(".ciphConsoleLine").forEach(x=>x.style.borderColor=border)
+}
+function addConsoleLine(text,type){
+if(!devConsole)return;
+const line=document.createElement("div");
+line.className="ciphConsoleLine";
+line.style.cssText="padding:3px 0;border-bottom:1px solid #ddd;white-space:pre-wrap;word-break:break-word;font-size:12px;line-height:1.45";
+if(type==="error")line.style.color="#e04848";
+if(type==="success")line.style.color="#16a05d";
+if(type==="command")line.style.color="#ff6a00";
+line.textContent=text;
+devConsole.querySelector(".ciphConsoleOutput").appendChild(line);
+const output=devConsole.querySelector(".ciphConsoleOutput");
+output.scrollTop=output.scrollHeight
+}
+function closeConsole(){
+if(devConsole){
+devConsole.remove();
+devConsole=null;
+commandInput=null;
+commandMenu=null
+}
+}
+function createConsole(){
+if(devConsole){
+commandInput.focus();
+return
+}
+devConsole=document.createElement("div");
+devConsole.id=CONSOLE;
+devConsole.style.cssText="position:absolute;left:10px;right:10px;bottom:10px;height:260px;z-index:20;border:1px solid #ff6a00;border-radius:10px;background:#f7f7f7;color:#222;box-shadow:0 12px 35px rgba(0,0,0,.3);display:flex;flex-direction:column;overflow:hidden";
+const consoleHeader=document.createElement("div");
+consoleHeader.style.cssText="height:31px;flex:none;background:#181818;color:#fff;display:flex;align-items:center;justify-content:space-between;padding:0 9px;font-size:12px;font-weight:700";
+const consoleTitle=document.createElement("span");
+consoleTitle.textContent="CiphAnon Dev Console";
+const consoleClose=document.createElement("button");
+consoleClose.textContent="×";
+consoleClose.title="Close console";
+consoleClose.style.cssText="border:0;background:transparent;color:#fff;font-size:18px;cursor:pointer";
+consoleClose.onclick=closeConsole;
+consoleHeader.append(consoleTitle,consoleClose);
+const output=document.createElement("div");
+output.className="ciphConsoleOutput";
+output.style.cssText="flex:1;overflow:auto;padding:8px;font-family:ui-monospace,SFMono-Regular,Consolas,monospace";
+const inputRow=document.createElement("div");
+inputRow.style.cssText="position:relative;display:flex;gap:6px;padding:7px;border-top:1px solid #ddd";
+const prompt=document.createElement("span");
+prompt.textContent=">";
+prompt.style.cssText="padding:7px 0 0 2px;color:#ff6a00;font-weight:700";
+commandInput=document.createElement("input");
+commandInput.type="text";
+commandInput.placeholder="Type / for commands...";
+commandInput.autocomplete="off";
+commandInput.spellcheck=false;
+commandInput.style.cssText="flex:1;height:30px;border:1px solid #ddd;border-radius:6px;padding:0 9px;font:12px ui-monospace,SFMono-Regular,Consolas,monospace;outline:none";
+commandMenu=document.createElement("div");
+commandMenu.style.cssText="display:none;position:absolute;left:7px;right:7px;bottom:45px;max-height:180px;overflow:auto;border:1px solid #ddd;border-radius:7px;background:#fff;box-shadow:0 8px 25px rgba(0,0,0,.2);z-index:30";
+inputRow.append(prompt,commandInput,commandMenu);
+devConsole.append(consoleHeader,output,inputRow);
+body.appendChild(devConsole);
+applyConsoleTheme();
+addConsoleLine("Console ready. Type /help for commands.","success");
+addConsoleLine("Use /bind to customize keybinds.","");
+commandInput.focus();
+commandInput.addEventListener("input",()=>{
+updateCommandMenu(commandInput.value)
+});
+commandInput.addEventListener("keydown",e=>{
+if(e.key==="Escape"){
+closeConsole();
+return
+}
+if(e.key==="ArrowDown"||e.key==="ArrowUp"){
+const items=[...commandMenu.querySelectorAll("button")];
+if(!items.length)return;
+e.preventDefault();
+const current=items.findIndex(x=>x.dataset.active==="1");
+let next=e.key==="ArrowDown"?current+1:current-1;
+if(next<0)next=items.length-1;
+if(next>=items.length)next=0;
+items.forEach(x=>x.dataset.active="0");
+items[next].dataset.active="1";
+items.forEach(x=>x.style.background=dark?"#191919":"#fff");
+items[next].style.background="#ff6a00";
+return
+}
+if(e.key==="Enter"){
+const value=commandInput.value.trim();
+if(value){
+addConsoleLine("> "+value,"command");
+runCommand(value)
+}
+commandInput.value="";
+commandMenu.style.display="none";
+return
+}
+if(e.key==="Tab"){
+const active=commandMenu.querySelector('button[data-active="1"]');
+if(active){
+e.preventDefault();
+commandInput.value=active.dataset.command+" ";
+updateCommandMenu(commandInput.value)
+}
+}
+})
+}
+const commands=[
+["/help","Show all available commands"],
+["/theme","Toggle light and dark mode"],
+["/reload","Reload the iframe"],
+["/opacity","Cycle panel opacity"],
+["/fullscreen","Toggle fullscreen"],
+["/minimize","Minimize the panel"],
+["/close","Close the panel"],
+["/console","Open the dev console"],
+["/top-left","Move panel to the top-left"],
+["/top-right","Move panel to the top-right"],
+["/bottom-left","Move panel to the bottom-left"],
+["/bottom-right","Move panel to the bottom-right"],
+["/set width 900px","Change panel width"],
+["/set height 600px","Change panel height"],
+["/set opacity .8","Set panel opacity"],
+["/bind ctrl+shift+p console","Create or update a keybind"],
+["/unbind ctrl+shift+p","Remove a keybind"],
+["/binds","Show current keybinds"],
+["/clear","Clear console output"]
+];
+function updateCommandMenu(value){
+if(!commandMenu)return;
+const query=value.toLowerCase().startsWith("/")?value.toLowerCase():"/"+value.toLowerCase();
+const matches=commands.filter(x=>x[0].toLowerCase().startsWith(query));
+commandMenu.innerHTML="";
+if(!value||!value.startsWith("/")||!matches.length){
+commandMenu.style.display="none";
+return
+}
+matches.forEach((item,index)=>{
+const b=document.createElement("button");
+b.type="button";
+b.dataset.command=item[0];
+b.dataset.active=index===0?"1":"0";
+b.style.cssText="display:block;width:100%;text-align:left;border:0;background:"+((index===0)?"#ff6a00":(dark?"#191919":"#fff"))+";color:"+(index===0?"#fff":(dark?"#eee":"#222"))+";padding:7px 9px;cursor:pointer;font:12px ui-monospace,SFMono-Regular,Consolas,monospace";
+b.innerHTML="<strong>"+item[0]+"</strong><span style='opacity:.7;margin-left:8px'>"+item[1]+"</span>";
+b.onclick=()=>{
+commandInput.value=item[0]+" ";
+commandInput.focus();
+updateCommandMenu(commandInput.value)
+};
+commandMenu.appendChild(b)
+});
+commandMenu.style.display="block"
+}
+function normalizeKey(e){
+const parts=[];
+if(e.ctrlKey)parts.push("ctrl");
+if(e.shiftKey)parts.push("shift");
+if(e.altKey)parts.push("alt");
+if(e.metaKey)parts.push("meta");
+let key=e.key.toLowerCase();
+if(key===" ")key="space";
+if(key==="escape")key="escape";
+if(!["control","shift","alt","meta"].includes(key))parts.push(key);
+return parts.join("+")
+}
+function runAction(name){
+switch(name){
+case"panel":
+p.style.display=p.style.display==="none"?"flex":"none";
+break;
+case"console":
+createConsole();
+break;
+case"minimize":
+miniBtn.click();
+break;
+case"fullscreen":
+full.click();
+break;
+case"reload":
+reload.click();
+break;
+case"close":
+close.click();
+break
+}
+}
+function runCommand(raw){
+const parts=raw.trim().split(/\s+/);
+const command=(parts.shift()||"").toLowerCase();
+const args=parts;
+if(command==="/help"){
+commands.forEach(x=>addConsoleLine(x[0]+" — "+x[1],""));
+return
+}
+if(command==="/theme"){
+theme.click();
+addConsoleLine("Theme changed.","success");
+return
+}
+if(command==="/reload"){
+reload.click();
+addConsoleLine("Iframe reload requested.","success");
+return
+}
+if(command==="/opacity"){
+opacity.click();
+addConsoleLine("Opacity set to "+Math.round(parseFloat(p.style.opacity)*100)+"%.","success");
+return
+}
+if(command==="/fullscreen"){
+full.click();
+addConsoleLine("Fullscreen toggled.","success");
+return
+}
+if(command==="/minimize"){
+miniBtn.click();
+return
+}
+if(command==="/close"){
+close.click();
+return
+}
+if(command==="/console"){
+addConsoleLine("Console is already open.","");
+return
+}
+if(command==="/top-left"){
+move("12px","60px");
+addConsoleLine("Moved to top-left.","success");
+return
+}
+if(command==="/top-right"){
+move("calc(100vw - "+p.offsetWidth+"px - 12px)","60px");
+addConsoleLine("Moved to top-right.","success");
+return
+}
+if(command==="/bottom-left"){
+move("12px","calc(100vh - "+p.offsetHeight+"px - 12px)");
+addConsoleLine("Moved to bottom-left.","success");
+return
+}
+if(command==="/bottom-right"){
+move("calc(100vw - "+p.offsetWidth+"px - 12px)","calc(100vh - "+p.offsetHeight+"px - 12px)");
+addConsoleLine("Moved to bottom-right.","success");
+return
+}
+if(command==="/set"){
+const property=(args.shift()||"").toLowerCase();
+const value=args.join(" ");
+if(!value){
+addConsoleLine("Usage: /set width 900px","error");
+return
+}
+if(property==="width"){
+p.style.width=value;
+save();
+addConsoleLine("Width set to "+value+".","success");
+return
+}
+if(property==="height"){
+p.style.height=value;
+save();
+addConsoleLine("Height set to "+value+".","success");
+return
+}
+if(property==="opacity"){
+const number=Math.max(.1,Math.min(1,parseFloat(value)));
+if(isNaN(number)){
+addConsoleLine("Opacity must be a number between 0.1 and 1.","error");
+return
+}
+p.style.opacity=String(number);
+save();
+addConsoleLine("Opacity set to "+Math.round(number*100)+"%.","success");
+return
+}
+addConsoleLine("Unknown setting: "+property,"error");
+return
+}
+if(command==="/bind"){
+const key=(args.shift()||"").toLowerCase();
+const actionName=(args.shift()||"").toLowerCase();
+if(!key||!actionName){
+addConsoleLine("Usage: /bind ctrl+shift+p console","error");
+return
+}
+if(!["panel","console","minimize","fullscreen","reload","close"].includes(actionName)){
+addConsoleLine("Available actions: panel, console, minimize, fullscreen, reload, close","error");
+return
+}
+binds[key]=actionName;
+save();
+addConsoleLine("Bound "+key+" to "+actionName+".","success");
+return
+}
+if(command==="/unbind"){
+const key=(args.shift()||"").toLowerCase();
+if(!key){
+addConsoleLine("Usage: /unbind ctrl+shift+p","error");
+return
+}
+if(binds[key]){
+delete binds[key];
+save();
+addConsoleLine("Removed binding for "+key+".","success")
+}else{
+addConsoleLine("No binding found for "+key+".","error")
+}
+return
+}
+if(command==="/binds"){
+Object.keys(binds).forEach(key=>addConsoleLine(key+" → "+binds[key],""));
+return
+}
+if(command==="/clear"){
+devConsole.querySelector(".ciphConsoleOutput").innerHTML="";
+return
+}
+addConsoleLine("Unknown command. Type /help.","error")
+}
+bar.addEventListener("mousedown",e=>{
+if(e.target.closest("button"))return;
+drag=true;
+dx=e.clientX-p.offsetLeft;
+dy=e.clientY-p.offsetTop;
+frame.style.pointerEvents="none"
+});
+document.addEventListener("mousemove",e=>{
+if(drag){
+p.style.left=Math.max(0,Math.min(window.innerWidth-p.offsetWidth,e.clientX-dx))+"px";
+p.style.top=Math.max(0,Math.min(window.innerHeight-p.offsetHeight,e.clientY-dy))+"px"
+}
+if(resizing){
+p.style.width=Math.max(360,rw+(e.clientX-rx))+"px";
+p.style.height=Math.max(220,rh+(e.clientY-ry))+"px"
+}
+});
+document.addEventListener("mouseup",()=>{
+if(drag||resizing)save();
+drag=false;
+resizing=false;
+frame.style.pointerEvents="auto"
+});
+resize.addEventListener("mousedown",e=>{
+resizing=true;
+rw=p.offsetWidth;
+rh=p.offsetHeight;
+rx=e.clientX;
+ry=e.clientY;
+frame.style.pointerEvents="none";
+e.preventDefault()
+});
+bar.addEventListener("touchstart",e=>{
+const t=e.touches[0];
+drag=true;
+dx=t.clientX-p.offsetLeft;
+dy=t.clientY-p.offsetTop
+},{passive:true});
+document.addEventListener("touchmove",e=>{
+if(!drag)return;
+const t=e.touches[0];
+p.style.left=Math.max(0,Math.min(window.innerWidth-p.offsetWidth,t.clientX-dx))+"px";
+p.style.top=Math.max(0,Math.min(window.innerHeight-p.offsetHeight,t.clientY-dy))+"px"
+},{passive:true});
+document.addEventListener("touchend",()=>{
+if(drag)save();
+drag=false
+});
+reload.onclick=()=>{
+status.textContent="Reloading...";
+try{frame.contentWindow.location.reload()}catch(e){frame.src=frame.src}
+setTimeout(()=>status.textContent="Ready",500)
+};
+theme.onclick=()=>{
+dark=!dark;
+applyTheme();
+status.textContent=dark?"Dark mode":"Light mode"
+};
+opacity.onclick=()=>{
+const values=["1",".9",".8",".7",".6"];
+let current=values.indexOf(p.style.opacity);
+p.style.opacity=values[(current+1)%values.length];
+save();
+status.textContent="Opacity: "+Math.round(parseFloat(p.style.opacity)*100)+"%"
+};
+miniBtn.onclick=()=>{
+p.style.display="none";
+mini.id=MIN;
+mini.textContent="C";
+mini.title="Restore CiphAnon Panel";
+mini.style.cssText="position:fixed;right:16px;bottom:16px;width:46px;height:46px;border:0;border-radius:13px;background:#181818;color:#ff6a00;font-weight:800;font-size:16px;z-index:2147483647;cursor:pointer;box-shadow:0 10px 30px rgba(0,0,0,.3)";
+mini.onclick=()=>{
+p.style.display="flex";
+mini.remove()
+};
+document.body.appendChild(mini)
+};
+full.onclick=()=>{
+if(!fs){
+p.dataset.prev=JSON.stringify({
+l:p.style.left,
+t:p.style.top,
+w:p.style.width,
+h:p.style.height
+});
+p.style.left="0";
+p.style.top="0";
+p.style.width="100vw";
+p.style.height="100vh";
+p.style.borderRadius="0";
+fs=true
+}else{
+const q=JSON.parse(p.dataset.prev||"{}");
+p.style.left=q.l||"80px";
+p.style.top=q.t||"80px";
+p.style.width=q.w||"820px";
+p.style.height=q.h||"520px";
+p.style.borderRadius="14px";
+fs=false
+}
+save()
+};
+consoleBtn.onclick=createConsole;
+close.onclick=()=>{
+save();
+closeConsole();
+p.remove();
+const x=document.getElementById(MIN);
+if(x)x.remove()
+};
+document.addEventListener("keydown",e=>{
+if(e.target.tagName==="INPUT"||e.target.tagName==="TEXTAREA")return;
+const key=normalizeKey(e);
+const actionName=binds[key];
+if(actionName){
+e.preventDefault();
+runAction(actionName);
+return
+}
+if(e.key==="/"){
+e.preventDefault();
+createConsole();
+return
+}
+if(e.key==="Escape"){
+closeConsole();
+p.remove();
+const x=document.getElementById(MIN);
+if(x)x.remove();
+return
+}
+if(e.key.toLowerCase()==="p")p.style.display=p.style.display==="none"?"flex":"none";
+if(e.key.toLowerCase()==="m")miniBtn.click();
+if(e.key.toLowerCase()==="f")full.click();
+if(e.key.toLowerCase()==="r")reload.click()
+});
+window.addEventListener("resize",()=>{
+if(p.style.left.includes("calc")||p.style.top.includes("calc"))return;
+p.style.left=Math.max(0,Math.min(parseInt(p.style.left)||0,window.innerWidth-p.offsetWidth))+"px";
+p.style.top=Math.max(0,Math.min(parseInt(p.style.top)||0,window.innerHeight-p.offsetHeight))+"px"
+});
+applyTheme();
+save();
+})();void 0
