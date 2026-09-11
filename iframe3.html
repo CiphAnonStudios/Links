@@ -1,0 +1,341 @@
+javascript:(()=>{if(window.__CIPHANON_DEVTOOLS__){window.__CIPHANON_DEVTOOLS__.toggle();return}const KEY="CIPHANON_DEVTOOLS_V2";let S={...(JSON.parse(localStorage.getItem(KEY)||"{}"))};const save=()=>localStorage.setItem(KEY,JSON.stringify(S));const $=(s,r=document)=>r.querySelector(s);const el=(tag,props={},parent)=>{const x=document.createElement(tag);Object.assign(x,props);if(parent)parent.appendChild(x);return x};const css=(x,s)=>x.style.cssText=s;
+
+const A="#ff6a00",BG="#101010",CARD="#181818",CARD2="#202020",TXT="#eee",MUTED="#888";
+
+const p=el("div");p.id="ciphAnonDevTools";
+css(p,`position:fixed;z-index:2147483647;left:${S.left||"60px"};top:${S.top||"60px"};width:${S.width||"900px"};height:${S.height||"600px"};min-width:420px;min-height:300px;background:${BG};color:${TXT};font:13px Arial,sans-serif;border:1px solid #333;border-radius:15px;box-shadow:0 25px 80px #000b;overflow:hidden;display:flex;flex-direction:column;`);
+
+const top=el("div",{},p);
+css(top,"height:46px;flex:none;background:#151515;border-bottom:1px solid #292929;display:flex;align-items:center;padding:0 10px;box-sizing:border-box;user-select:none;cursor:move");
+
+const logo=el("div",{},top);
+logo.innerHTML=`<span style="color:${A};font-size:18px;font-weight:900">C</span><span style="font-weight:800;margin-left:5px">CiphAnon</span><span style="color:#777;margin-left:5px">Developer Toolkit</span>`;
+
+const topBtns=el("div",{},top);css(topBtns,"margin-left:auto;display:flex;gap:5px");
+
+function button(text,title){const b=el("button");b.textContent=text;b.title=title;css(b,`border:0;background:#242424;color:#ddd;border-radius:7px;width:31px;height:29px;cursor:pointer;font-size:14px`);b.onmouseenter=()=>b.style.background=A;b.onmouseleave=()=>b.style.background="#242424";return b}
+
+const bTheme=button("◐","Theme"),bMini=button("−","Minimize"),bFull=button("⛶","Fullscreen"),bClose=button("×","Close");
+[topBtns.appendChild(bTheme),topBtns.appendChild(bMini),topBtns.appendChild(bFull),topBtns.appendChild(bClose)];
+
+const main=el("div",{},p);css(main,"flex:1;display:flex;min-height:0");
+
+const side=el("div",{},main);
+css(side,"width:145px;flex:none;background:#141414;border-right:1px solid #292929;padding:10px 7px;box-sizing:border-box");
+
+const content=el("div",{},main);css(content,"flex:1;min-width:0;overflow:hidden");
+
+const tabs=["Dashboard","Tools","Console","Editor","Storage","Notes","Settings"];
+let active="Dashboard";
+
+const tabButtons={};
+
+tabs.forEach(t=>{
+ const b=el("button",{},side);
+ b.textContent=t;
+ css(b,`display:block;width:100%;height:36px;margin-bottom:5px;text-align:left;padding:0 11px;border:0;border-radius:8px;background:transparent;color:#aaa;cursor:pointer;font-size:12px`);
+ b.onclick=()=>show(t);
+ tabButtons[t]=b;
+});
+
+const search=el("input",{},side);
+search.placeholder="Search tools...";
+css(search,"width:100%;height:32px;margin-top:12px;background:#1d1d1d;border:1px solid #333;border-radius:8px;color:#ddd;padding:0 9px;box-sizing:border-box;outline:none");
+
+const page=document.createElement("div");css(page,"height:100%;overflow:auto;padding:18px;box-sizing:border-box");content.appendChild(page);
+
+function heading(title,sub){
+ page.innerHTML="";
+ const h=el("div",{},page);
+ h.innerHTML=`<div style="font-size:21px;font-weight:800">${title}</div><div style="color:${MUTED};margin-top:4px">${sub}</div>`;
+ return h;
+}
+
+function card(title,body){
+ const c=el("div",{},page);
+ css(c,`background:${CARD};border:1px solid #292929;border-radius:11px;padding:14px;margin-top:12px`);
+ const h=el("div",{},c);h.textContent=title;css(h,"font-weight:700;margin-bottom:10px");
+ if(typeof body==="string"){const d=el("div",{},c);d.innerHTML=body}
+ return c;
+}
+
+function copy(text){
+ navigator.clipboard?.writeText(text);
+}
+
+function show(t){
+ active=t;
+ Object.keys(tabButtons).forEach(k=>{
+  tabButtons[k].style.background=k===t?"#2a1a12":"transparent";
+  tabButtons[k].style.color=k===t?A:"#aaa";
+ });
+ ({
+  Dashboard:dashboard,
+  Tools:tools,
+  Console:consoleTab,
+  Editor:editor,
+  Storage:storage,
+  Notes:notes,
+  Settings:settings
+ })[t]();
+}
+
+function dashboard(){
+ heading("Dashboard","Quick information about the current webpage.");
+
+card("Current Page",`
+<div style="word-break:break-all;color:#bbb">${location.href}</div>
+<div style="margin-top:10px;display:flex;gap:7px">
+<button class="action" id="copyUrl">Copy URL</button>
+<button class="action" id="newTab">Open New Tab</button>
+<button class="action" id="reloadPage">Reload</button>
+</div>`);
+
+$("#copyUrl",page).onclick=()=>copy(location.href);
+$("#newTab",page).onclick=()=>window.open(location.href,"_blank");
+$("#reloadPage",page).onclick=()=>location.reload();
+
+card("Page Information",`
+<div>Title: <b>${document.title||"(none)"}</b></div>
+<div style="margin-top:6px">Host: <b>${location.host}</b></div>
+<div style="margin-top:6px">Protocol: <b>${location.protocol}</b></div>
+<div style="margin-top:6px">Viewport: <b>${innerWidth} × ${innerHeight}</b></div>
+<div style="margin-top:6px">Elements: <b>${document.querySelectorAll("*").length}</b></div>`);
+
+card("Quick Actions",`
+<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px">
+<button class="action" id="darkPage">Toggle Page Dark Mode</button>
+<button class="action" id="outline">Outline Elements</button>
+<button class="action" id="hideImages">Toggle Images</button>
+<button class="action" id="scrollTop">Scroll Top</button>
+<button class="action" id="scrollBottom">Scroll Bottom</button>
+<button class="action" id="clearOutline">Clear Outlines</button>
+</div>`);
+
+$("#darkPage",page).onclick=()=>{document.documentElement.style.filter=document.documentElement.style.filter?"":"invert(1) hue-rotate(180deg)"};
+$("#outline",page).onclick=()=>document.querySelectorAll("*").forEach(x=>x.style.outline="1px solid rgba(255,106,0,.2)");
+$("#clearOutline",page).onclick=()=>document.querySelectorAll("*").forEach(x=>x.style.outline="");
+$("#hideImages",page).onclick=()=>document.querySelectorAll("img").forEach(x=>x.style.visibility=x.style.visibility==="hidden"?"":"hidden");
+$("#scrollTop",page).onclick=()=>scrollTo({top:0,behavior:"smooth"});
+$("#scrollBottom",page).onclick=()=>scrollTo({top:document.body.scrollHeight,behavior:"smooth"});
+}
+
+function tools(){
+heading("Tools","Useful tools for inspecting and testing pages.");
+
+const c=card("Element Inspector",`
+<div style="color:#999">Click an element on the page to inspect its basic information.</div>
+<button class="action" id="inspect">Start Inspector</button>
+<div id="inspectResult" style="margin-top:10px;color:#aaa"></div>`);
+$("#inspect",page).onclick=()=>{
+ alert("Inspector enabled. Click an element on the page.");
+ const fn=e=>{
+  if(p.contains(e.target))return;
+  e.preventDefault();e.stopPropagation();
+  const x=e.target;
+  $("#inspectResult",page).innerHTML=`<b>${x.tagName.toLowerCase()}</b><br>ID: ${x.id||"(none)"}<br>Classes: ${x.className||"(none)"}<br>Text: ${(x.innerText||"").slice(0,200)}`;
+  document.removeEventListener("click",fn,true);
+ };
+ document.addEventListener("click",fn,true);
+};
+
+card("Viewport Tester",`
+<div style="display:flex;gap:7px;flex-wrap:wrap">
+<button class="action" data-size="375,667">Phone</button>
+<button class="action" data-size="768,1024">Tablet</button>
+<button class="action" data-size="1280,720">Desktop</button>
+<button class="action" data-size="100%,100%">Reset</button>
+</div>`);
+page.querySelectorAll("[data-size]").forEach(b=>b.onclick=()=>{
+ const [w,h]=b.dataset.size.split(",");
+ if(w==="100%"){p.style.width=S.width||"900px";p.style.height=S.height||"600px";return}
+ window.resizeTo(+w,+h);
+});
+
+card("Page Statistics",`
+<div>Links: ${document.links.length}</div>
+<div>Images: ${document.images.length}</div>
+<div>Scripts: ${document.scripts.length}</div>
+<div>Stylesheets: ${document.styleSheets.length}</div>
+<div>Forms: ${document.forms.length}</div>`);
+}
+
+let logs=[];
+
+const originalLog=console.log,originalWarn=console.warn,originalError=console.error;
+function capture(type,args){
+ logs.push({type,text:args.map(x=>{try{return typeof x==="object"?JSON.stringify(x):String(x)}catch(e){return String(x)}}).join(" ")});
+ if(logs.length>300)logs.shift();
+ if(active==="Console")consoleTab();
+}
+console.log=(...a)=>{capture("log",a);originalLog.apply(console,a)};
+console.warn=(...a)=>{capture("warn",a);originalWarn.apply(console,a)};
+console.error=(...a)=>{capture("error",a);originalError.apply(console,a)};
+
+function consoleTab(){
+heading("Console","Run JavaScript and view captured console output.");
+
+const area=el("textarea",{},page);
+area.placeholder="Type JavaScript here...\nExample: document.title";
+css(area,"width:100%;height:110px;background:#0b0b0b;color:#ddd;border:1px solid #333;border-radius:9px;padding:10px;box-sizing:border-box;font:12px monospace;resize:vertical");
+
+const run=el("button",{},page);run.textContent="Run Code";css(run,"margin-top:8px;background:#ff6a00;color:#fff;border:0;border-radius:7px;padding:8px 14px;cursor:pointer");
+
+const clear=el("button",{},page);clear.textContent="Clear";css(clear,"margin-left:6px;background:#292929;color:#ddd;border:0;border-radius:7px;padding:8px 14px;cursor:pointer");
+
+const output=el("div",{},page);css(output,"margin-top:12px;background:#0b0b0b;border:1px solid #292929;border-radius:9px;padding:10px;min-height:150px;font:12px monospace;white-space:pre-wrap;overflow:auto");
+
+function render(){
+ output.innerHTML=logs.length?logs.map(x=>`<div style="color:${x.type==="error"?"#ff6b6b":x.type==="warn"?"#ffc857":"#bbb"}">[${x.type}] ${x.text.replace(/</g,"&lt;")}</div>`).join(""):"No captured output.";
+}
+run.onclick=()=>{
+ try{
+  const result=eval(area.value);
+  if(result!==undefined)capture("log",[result]);
+ }catch(e){capture("error",[e])}
+ render();
+};
+clear.onclick=()=>{logs=[];render()};
+render();
+}
+
+function editor(){
+heading("Editor","Quick HTML/CSS/JS sandbox.");
+
+const select=el("select",{},page);
+["HTML","CSS","JavaScript"].forEach(x=>el("option",{textContent:x},select));
+css(select,"background:#1d1d1d;color:#ddd;border:1px solid #333;border-radius:7px;padding:7px");
+
+const code=el("textarea",{},page);
+css(code,"display:block;width:100%;height:250px;margin-top:9px;background:#090909;color:#ddd;border:1px solid #333;border-radius:9px;padding:12px;box-sizing:border-box;font:12px monospace;resize:vertical");
+code.value=S.editor||"";
+
+const run=el("button",{},page);run.textContent="Run";css(run,"margin-top:8px;background:#ff6a00;color:#fff;border:0;border-radius:7px;padding:8px 16px;cursor:pointer");
+
+const saveBtn=el("button",{},page);saveBtn.textContent="Save";css(saveBtn,"margin-left:6px;background:#292929;color:#ddd;border:0;border-radius:7px;padding:8px 16px;cursor:pointer");
+
+saveBtn.onclick=()=>{S.editor=code.value;save()};
+run.onclick=()=>{
+ const type=select.value;
+ if(type==="HTML"){const w=open("","_blank");w.document.write(code.value);w.document.close()}
+ if(type==="CSS"){const st=el("style",{textContent:code.value},document.head);st.dataset.ciphAnon="1"}
+ if(type==="JavaScript"){try{eval(code.value)}catch(e){console.error(e)}}
+};
+}
+
+function storage(){
+heading("Storage","View and manage localStorage/sessionStorage.");
+
+function storeBox(name,store){
+const c=card(name,"");
+const list=el("div",{},c);
+Object.keys(store).forEach(k=>{
+ const row=el("div",{},list);
+ css(row,"display:flex;gap:6px;margin:5px 0");
+ const input=el("input",{value:store.getItem(k)},row);
+ css(input,"flex:1;background:#111;color:#ddd;border:1px solid #333;border-radius:6px;padding:6px");
+ const del=el("button",{textContent:"×"},row);
+ css(del,"background:#292929;color:#fff;border:0;border-radius:6px;width:30px");
+ input.onchange=()=>store.setItem(k,input.value);
+ del.onclick=()=>{store.removeItem(k);storage()};
+});
+}
+storeBox("localStorage",localStorage);
+storeBox("sessionStorage",sessionStorage);
+}
+
+function notes(){
+heading("Notes","Your notes are saved locally in this browser.");
+
+const area=el("textarea",{},page);
+css(area,"width:100%;height:350px;background:#111;color:#ddd;border:1px solid #333;border-radius:10px;padding:12px;box-sizing:border-box;resize:vertical");
+area.value=S.notes||"";
+area.oninput=()=>{S.notes=area.value;save()};
+}
+
+function settings(){
+heading("Settings","Customize the developer toolkit.");
+
+const c=card("Appearance",`
+<label style="display:block;margin:8px 0">Opacity <input id="op" type="range" min="40" max="100" value="${Math.round((S.opacity||1)*100)}"></label>
+<label style="display:block;margin:8px 0">Width <input id="wid" type="number" value="${parseInt(S.width)||900}" style="width:80px;background:#111;color:#ddd;border:1px solid #333;padding:5px"></label>
+<label style="display:block;margin:8px 0">Height <input id="hei" type="number" value="${parseInt(S.height)||600}" style="width:80px;background:#111;color:#ddd;border:1px solid #333;padding:5px"></label>`);
+$("#op",page).oninput=e=>{p.style.opacity=e.target.value/100;S.opacity=p.style.opacity;save()};
+$("#wid",page).onchange=e=>{p.style.width=e.target.value+"px";S.width=p.style.width;save()};
+$("#hei",page).onchange=e=>{p.style.height=e.target.value+"px";S.height=p.style.height;save()};
+
+const r=card("Reset",`<button class="action" id="reset">Reset Toolkit Settings</button>`);
+$("#reset",page).onclick=()=>{localStorage.removeItem(KEY);location.reload()};
+}
+
+const style=el("style",{},document.head);
+style.textContent=`#ciphAnonDevTools button.action{background:#242424;color:#ddd;border:1px solid #333;border-radius:7px;padding:7px 10px;cursor:pointer}#ciphAnonDevTools button.action:hover{border-color:${A};color:${A}}#ciphAnonDevTools input:focus,#ciphAnonDevTools textarea:focus{border-color:${A};outline:none}`;
+
+let drag=false,dx=0,dy=0;
+top.onmousedown=e=>{
+if(e.target.closest("button"))return;
+drag=true;dx=e.clientX-p.offsetLeft;dy=e.clientY-p.offsetTop;
+};
+document.addEventListener("mousemove",e=>{
+if(!drag)return;
+p.style.left=Math.max(0,e.clientX-dx)+"px";
+p.style.top=Math.max(0,e.clientY-dy)+"px";
+});
+document.addEventListener("mouseup",()=>{if(drag){S.left=p.style.left;S.top=p.style.top;save()}drag=false});
+
+let full=false,prev={};
+bFull.onclick=()=>{
+if(!full){
+prev={left:p.style.left,top:p.style.top,width:p.style.width,height:p.style.height};
+Object.assign(p.style,{left:"0",top:"0",width:"100vw",height:"100vh",borderRadius:"0"});
+full=true;
+}else{
+Object.assign(p.style,{left:prev.left,top:prev.top,width:prev.width,height:prev.height,borderRadius:"15px"});
+full=false;
+}
+};
+
+bMini.onclick=()=>{
+p.style.display="none";
+const m=el("button");m.textContent="C";m.id="ciphAnonMini";
+css(m,"position:fixed;right:16px;bottom:16px;width:48px;height:48px;border:0;border-radius:14px;background:#171717;color:#ff6a00;font-weight:900;z-index:2147483647;cursor:pointer;box-shadow:0 10px 30px #0008");
+m.onclick=()=>{p.style.display="flex";m.remove()};
+document.body.appendChild(m);
+};
+
+bClose.onclick=()=>{S.left=p.style.left;S.top=p.style.top;S.width=p.style.width;S.height=p.style.height;save();p.remove();delete window.__CIPHANON_DEVTOOLS__};
+
+bTheme.onclick=()=>{
+S.theme=S.theme==="light"?"dark":"light";
+if(S.theme==="light"){
+p.style.background="#f4f4f4";
+p.style.color="#222";
+}else{
+p.style.background=BG;
+p.style.color=TXT;
+}
+save();
+};
+
+window.__CIPHANON_DEVTOOLS__={
+toggle:()=>{p.style.display=p.style.display==="none"?"flex":"none"}
+};
+
+document.addEventListener("keydown",e=>{
+if(e.target.matches("input,textarea,select"))return;
+if(e.key==="Escape")bClose.click();
+if(e.key.toLowerCase()==="p")window.__CIPHANON_DEVTOOLS__.toggle();
+if(e.key.toLowerCase()==="m")bMini.click();
+if(e.key.toLowerCase()==="f")bFull.click();
+if(e.key.toLowerCase()==="c")show("Console");
+if(e.key.toLowerCase()==="e")show("Editor");
+});
+
+search.oninput=()=>{
+const q=search.value.toLowerCase();
+Object.entries(tabButtons).forEach(([k,b])=>b.style.display=k.toLowerCase().includes(q)||!q?"block":"none");
+};
+
+show("Dashboard");
+
+})();
