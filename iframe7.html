@@ -1,251 +1,361 @@
-javascript:(()=>{const ID="ciphAnonPanel",MIN="ciphAnonMini",KEY="ciphAnonPanelSettings",CONSOLE="ciphAnonDevConsole",STYLE="ciphAnonStyle",TOAST="ciphAnonToast",SPECIAL="ciphAnonSpecial",DEFAULT_DESTINATION="https://ciphanonstudios.github.io/CiphAnonStudios-v12",DEFAULT_MIN_DELAY=3000,DEFAULT_MAX_DELAY=10000;
+javascript:(()=>{
+
+const ID="ciphAnonPanel",
+MIN="ciphAnonMini",
+KEY="ciphAnonPanelSettings",
+CONSOLE="ciphAnonDevConsole",
+STYLE="ciphAnonStyle",
+TOAST="ciphAnonToast",
+SPECIAL="ciphAnonSpecial",
+
+DEFAULT_DESTINATION="https://ciphanonstudios.github.io/Eaglercraft-1.8-v2/",
+DEFAULT_MIN_DELAY=3000,
+DEFAULT_MAX_DELAY=10000;
+
+
+/* =========================================================
+   SPECIAL PAGE SETTINGS
+   CHANGE ONLY THIS SECTION
+   ========================================================= */
 
 const SPECIAL_PAGE={
-url:"https://example.com/special",
-match:"exact",
-buttonText:"☰",
-buttonTip:"Open Special List",
-panelTitle:"My List",
-items:[
-"Add your first item here",
-"Add your second item here",
-"Add your third item here"
-]
+    url:"https://ciphanonstudios.github.io/Eaglercraft-1.8-v2/",
+    match:"exact",
+
+    buttonText:"☰",
+    buttonTip:"Open Special List",
+
+    panelTitle:"My List",
+
+    items:[
+        "Add your first item here",
+        "Add your second item here",
+        "Add your third item here"
+    ]
 };
 
-const old=document.getElementById(ID);
-if(old){
-old.style.display=old.style.display==="none"?"flex":"none";
-return
-}
 
-const om=document.getElementById(MIN);
-if(om)om.remove();
+/* =========================================================
+   REMOVE OLD VERSION
+   ========================================================= */
 
-const os=document.getElementById(STYLE);
-if(os)os.remove();
+const oldPanel=document.getElementById(ID);
+if(oldPanel)oldPanel.remove();
+
+const oldMini=document.getElementById(MIN);
+if(oldMini)oldMini.remove();
+
+const oldStyle=document.getElementById(STYLE);
+if(oldStyle)oldStyle.remove();
+
+const oldConsole=document.getElementById(CONSOLE);
+if(oldConsole)oldConsole.remove();
 
 const oldSpecial=document.getElementById(SPECIAL);
 if(oldSpecial)oldSpecial.remove();
 
+const oldToast=document.getElementById(TOAST);
+if(oldToast)oldToast.remove();
+
+
+/* =========================================================
+   SAVED SETTINGS
+   ========================================================= */
+
 let saved={};
 
 try{
-saved=JSON.parse(localStorage.getItem(KEY)||"{}")
-}catch(e){}
-
-const valid=u=>{
-try{
-new URL(u);
-return true
+    saved=JSON.parse(localStorage.getItem(KEY)||"{}");
 }catch(e){
-return false
+    saved={};
 }
+
+
+/* =========================================================
+   HELPERS
+   ========================================================= */
+
+const clamp=(n,a,b)=>{
+    return Math.max(a,Math.min(b,n));
 };
 
-const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
+const valid=u=>{
+    try{
+        new URL(u,location.href);
+        return true;
+    }catch(e){
+        return false;
+    }
+};
 
 function normalizeUrl(u){
-try{
-const x=new URL(u,location.href);
-x.hash="";
-return x.href.replace(/\/$/,"");
-}catch(e){
-return String(u).replace(/\/$/,"");
-}
+    try{
+        const x=new URL(u,location.href);
+
+        x.hash="";
+
+        let result=x.href;
+
+        if(result.endsWith("/")){
+            result=result.slice(0,-1);
+        }
+
+        return result.toLowerCase();
+
+    }catch(e){
+        return String(u)
+            .trim()
+            .replace(/\/$/,"")
+            .toLowerCase();
+    }
 }
 
 function urlMatches(u){
-const current=normalizeUrl(u);
-const target=normalizeUrl(SPECIAL_PAGE.url);
 
-if(SPECIAL_PAGE.match==="startsWith"){
-return current.startsWith(target);
+    const current=normalizeUrl(u);
+    const target=normalizeUrl(SPECIAL_PAGE.url);
+
+    if(SPECIAL_PAGE.match==="startsWith"){
+        return current.startsWith(target);
+    }
+
+    return current===target;
 }
 
-return current===target;
-}
+
+/* =========================================================
+   STYLE
+   ========================================================= */
 
 const style=document.createElement("style");
 
 style.id=STYLE;
 
 style.textContent=`
-#${ID} *{box-sizing:border-box}
 
-#${ID} button{
-font-family:Arial,sans-serif
+#${ID} *{
+    box-sizing:border-box;
 }
 
-#${ID} .capBtn:hover{
-background:#ff6a00!important;
-transform:translateY(-1px)
+#${ID} button{
+    font-family:Arial,sans-serif;
 }
 
 #${ID} .capBtn{
-transition:.15s
+    transition:.15s;
 }
 
-#${ID} .capAction:hover{
-border-color:#ff6a00!important;
-transform:translateY(-1px)
+#${ID} .capBtn:hover{
+    background:#ff6a00!important;
+    transform:translateY(-1px);
 }
 
 #${ID} .capAction{
-transition:.15s
+    transition:.15s;
+}
+
+#${ID} .capAction:hover{
+    border-color:#ff6a00!important;
+    transform:translateY(-1px);
 }
 
 #${ID} input:focus{
-border-color:#ff6a00!important;
-box-shadow:0 0 0 2px rgba(255,106,0,.12)
+    border-color:#ff6a00!important;
+    box-shadow:0 0 0 2px rgba(255,106,0,.12);
 }
 
 .capTip{
-position:fixed;
-pointer-events:none;
-background:#111;
-color:#fff;
-padding:6px 9px;
-border-radius:6px;
-font:11px Arial;
-white-space:nowrap;
-opacity:0;
-transform:translateY(3px);
-transition:.15s;
-z-index:2147483647;
-box-shadow:0 5px 18px rgba(0,0,0,.3)
+    position:fixed;
+    pointer-events:none;
+    background:#111;
+    color:#fff;
+    padding:6px 9px;
+    border-radius:6px;
+    font:11px Arial;
+    white-space:nowrap;
+    opacity:0;
+    transform:translateY(3px);
+    transition:.15s;
+    z-index:2147483647;
+    box-shadow:0 5px 18px rgba(0,0,0,.3);
 }
 
 #${SPECIAL}{
-position:fixed;
-width:360px;
-max-width:calc(100vw - 30px);
-height:390px;
-max-height:calc(100vh - 30px);
-left:50%;
-top:50%;
-transform:translate(-50%,-50%);
-background:#fff;
-border:1px solid rgba(255,106,0,.7);
-border-radius:13px;
-z-index:2147483646;
-box-shadow:0 20px 70px rgba(0,0,0,.4);
-display:flex;
-flex-direction:column;
-overflow:hidden;
-font-family:Inter,Arial,sans-serif
+    position:fixed;
+    width:360px;
+    max-width:calc(100vw - 30px);
+    height:390px;
+    max-height:calc(100vh - 30px);
+
+    left:50%;
+    top:50%;
+
+    transform:translate(-50%,-50%);
+
+    background:#fff;
+
+    border:1px solid rgba(255,106,0,.7);
+    border-radius:13px;
+
+    z-index:2147483646;
+
+    box-shadow:0 20px 70px rgba(0,0,0,.4);
+
+    display:flex;
+    flex-direction:column;
+
+    overflow:hidden;
+
+    font-family:Inter,Arial,sans-serif;
 }
 
 #${SPECIAL} .specialHead{
-height:44px;
-flex:none;
-background:#181818;
-color:#fff;
-display:flex;
-align-items:center;
-justify-content:space-between;
-padding:0 10px;
-cursor:move;
-user-select:none
+    height:44px;
+    flex:none;
+
+    background:#181818;
+    color:#fff;
+
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+
+    padding:0 10px;
+
+    cursor:move;
+    user-select:none;
 }
 
 #${SPECIAL} .specialTitle{
-font-size:13px;
-font-weight:700;
-display:flex;
-align-items:center;
-gap:8px
+    font-size:13px;
+    font-weight:700;
+
+    display:flex;
+    align-items:center;
+    gap:8px;
 }
 
 #${SPECIAL} .specialDot{
-width:8px;
-height:8px;
-border-radius:50%;
-background:#ff6a00;
-box-shadow:0 0 12px #ff6a00
+    width:8px;
+    height:8px;
+
+    border-radius:50%;
+
+    background:#ff6a00;
+
+    box-shadow:0 0 12px #ff6a00;
 }
 
 #${SPECIAL} .specialClose{
-width:29px;
-height:27px;
-border:0;
-border-radius:7px;
-background:#292929;
-color:#fff;
-cursor:pointer;
-font-size:17px;
-transition:.15s
+    width:29px;
+    height:27px;
+
+    border:0;
+    border-radius:7px;
+
+    background:#292929;
+    color:#fff;
+
+    cursor:pointer;
+    font-size:17px;
+
+    transition:.15s;
 }
 
 #${SPECIAL} .specialClose:hover{
-background:#ff6a00
+    background:#ff6a00;
 }
 
 #${SPECIAL} .specialBody{
-flex:1;
-overflow:auto;
-padding:12px;
-background:#fff
+    flex:1;
+
+    overflow:auto;
+
+    padding:12px;
+
+    background:#fff;
 }
 
 #${SPECIAL} .specialItem{
-padding:11px 12px;
-margin-bottom:8px;
-border:1px solid #ddd;
-border-radius:8px;
-background:#fafafa;
-color:#222;
-font:12px Arial;
-line-height:1.45;
-word-break:break-word;
-transition:.15s
+    padding:11px 12px;
+
+    margin-bottom:8px;
+
+    border:1px solid #ddd;
+    border-radius:8px;
+
+    background:#fafafa;
+    color:#222;
+
+    font:12px Arial;
+    line-height:1.45;
+
+    word-break:break-word;
+
+    transition:.15s;
 }
 
 #${SPECIAL} .specialItem:hover{
-border-color:#ff6a00;
-transform:translateX(2px);
-box-shadow:0 3px 12px rgba(255,106,0,.1)
+    border-color:#ff6a00;
+
+    transform:translateX(2px);
+
+    box-shadow:0 3px 12px rgba(255,106,0,.1);
 }
 
 #${SPECIAL} .specialEmpty{
-padding:20px;
-text-align:center;
-color:#888;
-font:12px Arial
+    padding:20px;
+
+    text-align:center;
+
+    color:#888;
+
+    font:12px Arial;
 }
 
 #${SPECIAL} .specialFooter{
-height:36px;
-flex:none;
-border-top:1px solid #ddd;
-display:flex;
-align-items:center;
-padding:0 10px;
-font:10px Arial;
-color:#888
+    height:36px;
+    flex:none;
+
+    border-top:1px solid #ddd;
+
+    display:flex;
+    align-items:center;
+
+    padding:0 10px;
+
+    font:10px Arial;
+    color:#888;
 }
 
 #${SPECIAL}.dark{
-background:#161616
+    background:#161616;
 }
 
 #${SPECIAL}.dark .specialBody{
-background:#161616
+    background:#161616;
 }
 
 #${SPECIAL}.dark .specialItem{
-background:#202020;
-border-color:#333;
-color:#eee
+    background:#202020;
+    border-color:#333;
+    color:#eee;
 }
 
 #${SPECIAL}.dark .specialFooter{
-border-color:#333;
-color:#888
+    border-color:#333;
+    color:#888;
 }
+
 `;
 
+
 document.head.appendChild(style);
+
+
+/* =========================================================
+   MAIN PANEL
+   ========================================================= */
 
 const p=document.createElement("div");
 const bar=document.createElement("div");
@@ -261,80 +371,165 @@ const resize=document.createElement("div");
 p.id=ID;
 
 Object.assign(p.style,{
-position:"fixed",
-left:saved.left||"80px",
-top:saved.top||"80px",
-width:saved.width||"820px",
-height:saved.height||"520px",
-minWidth:"350px",
-minHeight:"220px",
-maxWidth:"100vw",
-maxHeight:"100vh",
-background:"#fff",
-border:"1px solid rgba(255,106,0,.65)",
-borderRadius:saved.radius||"14px",
-zIndex:"2147483647",
-display:"flex",
-flexDirection:"column",
-overflow:"hidden",
-boxShadow:"0 20px 70px rgba(0,0,0,.38)",
-fontFamily:"Inter,Arial,sans-serif",
-opacity:saved.opacity||"1"
+    position:"fixed",
+
+    left:saved.left||"80px",
+    top:saved.top||"80px",
+
+    width:saved.width||"820px",
+    height:saved.height||"520px",
+
+    minWidth:"350px",
+    minHeight:"220px",
+
+    maxWidth:"100vw",
+    maxHeight:"100vh",
+
+    background:"#fff",
+
+    border:"1px solid rgba(255,106,0,.65)",
+
+    borderRadius:saved.radius||"14px",
+
+    zIndex:"2147483647",
+
+    display:"flex",
+
+    flexDirection:"column",
+
+    overflow:"hidden",
+
+    boxShadow:"0 20px 70px rgba(0,0,0,.38)",
+
+    fontFamily:"Inter,Arial,sans-serif",
+
+    opacity:saved.opacity||"1"
 });
 
-bar.style.cssText="height:44px;flex:none;background:#181818;color:#fff;display:flex;align-items:center;justify-content:space-between;padding:0 9px;cursor:move;user-select:none";
 
-title.style.cssText="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:700";
+/* =========================================================
+   HEADER
+   ========================================================= */
 
-title.innerHTML='<span style="width:9px;height:9px;border-radius:50%;background:#ff6a00;box-shadow:0 0 12px #ff6a00"></span><span>CiphAnon Studios</span><span style="opacity:.4;font-weight:400">Panel</span>';
+bar.style.cssText=
+"height:44px;"+
+"flex:none;"+
+"background:#181818;"+
+"color:#fff;"+
+"display:flex;"+
+"align-items:center;"+
+"justify-content:space-between;"+
+"padding:0 9px;"+
+"cursor:move;"+
+"user-select:none";
 
-tools.style.cssText="display:flex;gap:5px;align-items:center";
+
+title.style.cssText=
+"display:flex;"+
+"align-items:center;"+
+"gap:8px;"+
+"font-size:13px;"+
+"font-weight:700";
+
+
+title.innerHTML=
+'<span style="width:9px;height:9px;border-radius:50%;background:#ff6a00;box-shadow:0 0 12px #ff6a00"></span>'+
+'<span>CiphAnon Studios</span>'+
+'<span style="opacity:.4;font-weight:400">Panel</span>';
+
+
+tools.style.cssText=
+"display:flex;"+
+"gap:5px;"+
+"align-items:center";
+
+
+/* =========================================================
+   TOOLTIPS
+   ========================================================= */
 
 let currentTip=null;
 
 function showTip(b){
-hideTip();
 
-currentTip=document.createElement("div");
+    hideTip();
 
-currentTip.className="capTip";
+    currentTip=document.createElement("div");
 
-currentTip.textContent=b.dataset.tip||"";
+    currentTip.className="capTip";
 
-document.body.appendChild(currentTip);
+    currentTip.textContent=b.dataset.tip||"";
 
-const r=b.getBoundingClientRect();
+    document.body.appendChild(currentTip);
 
-currentTip.style.left=Math.max(4,r.left+r.width/2-currentTip.offsetWidth/2)+"px";
+    const r=b.getBoundingClientRect();
 
-currentTip.style.top=r.bottom+7+"px";
+    currentTip.style.left=
+        Math.max(
+            4,
+            r.left+r.width/2-currentTip.offsetWidth/2
+        )+"px";
 
-requestAnimationFrame(()=>{
-if(currentTip)currentTip.style.opacity="1";
-});
+    currentTip.style.top=
+        r.bottom+7+"px";
+
+    requestAnimationFrame(()=>{
+        if(currentTip){
+            currentTip.style.opacity="1";
+        }
+    });
 }
 
 function hideTip(){
-if(currentTip){
-currentTip.remove();
-currentTip=null;
+
+    if(currentTip){
+        currentTip.remove();
+        currentTip=null;
+    }
 }
-}
+
+
+/* =========================================================
+   BUTTON CREATOR
+   ========================================================= */
 
 function button(text,tip){
-const b=document.createElement("button");
 
-b.textContent=text;
-b.dataset.tip=tip;
-b.className="capBtn";
+    const b=document.createElement("button");
 
-b.style.cssText="width:31px;height:29px;border:0;border-radius:7px;background:#292929;color:#fff;cursor:pointer;font-size:14px";
+    b.textContent=text;
 
-b.addEventListener("mouseenter",()=>showTip(b));
-b.addEventListener("mouseleave",hideTip);
+    b.dataset.tip=tip;
 
-return b;
+    b.className="capBtn";
+
+    b.style.cssText=
+        "width:31px;"+
+        "height:29px;"+
+        "border:0;"+
+        "border-radius:7px;"+
+        "background:#292929;"+
+        "color:#fff;"+
+        "cursor:pointer;"+
+        "font-size:14px";
+
+    b.addEventListener(
+        "mouseenter",
+        ()=>showTip(b)
+    );
+
+    b.addEventListener(
+        "mouseleave",
+        hideTip
+    );
+
+    return b;
 }
+
+
+/* =========================================================
+   HEADER BUTTONS
+   ========================================================= */
 
 const back=button("←","Go back");
 const forward=button("→","Go forward");
@@ -347,104 +542,252 @@ const full=button("⛶","Fullscreen / windowed");
 const consoleBtn=button("⌘","Developer console");
 
 const specialBtn=button(
-SPECIAL_PAGE.buttonText,
-SPECIAL_PAGE.buttonTip
+    SPECIAL_PAGE.buttonText,
+    SPECIAL_PAGE.buttonTip
 );
 
 const close=button("×","Close panel");
 
+
 specialBtn.style.display="none";
 
+
 [
-back,
-forward,
-reload,
-theme,
-opacity,
-compact,
-miniBtn,
-full,
-consoleBtn,
-specialBtn,
-close
+    back,
+    forward,
+    reload,
+    theme,
+    opacity,
+    compact,
+    miniBtn,
+    full,
+    consoleBtn,
+    specialBtn,
+    close
 ].forEach(x=>tools.appendChild(x));
+
 
 bar.append(title,tools);
 
-body.style.cssText="flex:1;position:relative;display:flex;flex-direction:column;overflow:hidden";
 
-nav.style.cssText="height:42px;flex:none;background:#f5f5f5;border-bottom:1px solid #ddd;display:flex;align-items:center;gap:6px;padding:6px 8px";
+/* =========================================================
+   BODY
+   ========================================================= */
 
-function action(text,tip,fn){
-const b=document.createElement("button");
+body.style.cssText=
+"flex:1;"+
+"position:relative;"+
+"display:flex;"+
+"flex-direction:column;"+
+"overflow:hidden";
 
-b.textContent=text;
-b.dataset.tip=tip;
-b.className="capAction";
 
-b.style.cssText="height:29px;border:1px solid #ddd;background:#fff;border-radius:7px;padding:0 9px;cursor:pointer;font-size:12px";
+/* =========================================================
+   NAVIGATION BAR
+   ========================================================= */
 
-b.onclick=fn;
+nav.style.cssText=
+"height:42px;"+
+"flex:none;"+
+"background:#f5f5f5;"+
+"border-bottom:1px solid #ddd;"+
+"display:flex;"+
+"align-items:center;"+
+"gap:6px;"+
+"padding:6px 8px";
 
-b.onmouseenter=()=>showTip(b);
-b.onmouseleave=hideTip;
-
-return b;
-}
 
 urlInput.type="text";
 urlInput.spellcheck=false;
 urlInput.autocomplete="off";
 urlInput.placeholder="Enter destination URL...";
 
-urlInput.style.cssText="flex:1;height:29px;border:1px solid #ddd;border-radius:7px;padding:0 9px;font:12px Arial;outline:none";
+urlInput.style.cssText=
+"flex:1;"+
+"height:29px;"+
+"border:1px solid #ddd;"+
+"border-radius:7px;"+
+"padding:0 9px;"+
+"font:12px Arial;"+
+"outline:none";
 
-const go=action("Go","Navigate to URL",()=>{
-navigate(urlInput.value.trim());
-});
 
-const copy=action("Copy","Copy current destination",async()=>{
-const u=frame.dataset.destination||DEFAULT_DESTINATION;
+function action(text,tip,fn){
 
-try{
-await navigator.clipboard.writeText(u);
-toast("URL copied","success");
-}catch(e){
-const x=document.createElement("textarea");
-x.value=u;
-document.body.appendChild(x);
-x.select();
-document.execCommand("copy");
-x.remove();
-toast("URL copied","success");
+    const b=document.createElement("button");
+
+    b.textContent=text;
+    b.dataset.tip=tip;
+    b.className="capAction";
+
+    b.style.cssText=
+        "height:29px;"+
+        "border:1px solid #ddd;"+
+        "background:#fff;"+
+        "border-radius:7px;"+
+        "padding:0 9px;"+
+        "cursor:pointer;"+
+        "font-size:12px";
+
+    b.onclick=fn;
+
+    b.onmouseenter=()=>showTip(b);
+    b.onmouseleave=hideTip;
+
+    return b;
 }
-});
 
-nav.append(back,forward,urlInput,go,copy);
 
-const status=document.createElement("span");
+const go=action(
+    "Go",
+    "Navigate to URL",
+    ()=>{
+        navigate(urlInput.value.trim());
+    }
+);
 
-status.style.cssText="position:absolute;left:10px;bottom:7px;padding:4px 7px;background:rgba(0,0,0,.65);color:#fff;border-radius:5px;font:10px Arial;z-index:25;pointer-events:none";
 
-status.textContent="Starting...";
+const copy=action(
+    "Copy",
+    "Copy current destination",
+    async()=>{
 
-frame.style.cssText="position:absolute;inset:0;width:100%;height:100%;border:0;background:#fff;z-index:1";
+        const u=destinationUrl;
+
+        try{
+
+            await navigator.clipboard.writeText(u);
+
+            toast("URL copied","success");
+
+        }catch(e){
+
+            const x=document.createElement("textarea");
+
+            x.value=u;
+
+            document.body.appendChild(x);
+
+            x.select();
+
+            document.execCommand("copy");
+
+            x.remove();
+
+            toast("URL copied","success");
+        }
+    }
+);
+
+
+nav.append(
+    back,
+    forward,
+    urlInput,
+    go,
+    copy
+);
+
+
+/* =========================================================
+   IFRAME
+   ========================================================= */
+
+frame.style.cssText=
+"position:absolute;"+
+"inset:0;"+
+"width:100%;"+
+"height:100%;"+
+"border:0;"+
+"background:#fff;"+
+"z-index:1";
+
 
 frame.allowFullscreen=true;
 
-frame.setAttribute("allow","autoplay;fullscreen");
+frame.setAttribute(
+    "allow",
+    "autoplay;fullscreen"
+);
 
-overlay.style.cssText="position:absolute;inset:0;width:100%;height:100%;border:0;background:#181818;z-index:5;opacity:1;transition:opacity .45s";
 
-overlay.setAttribute("allow","autoplay;fullscreen");
+/* =========================================================
+   LOADING OVERLAY
+   ========================================================= */
 
-resize.style.cssText="position:absolute;right:0;bottom:0;width:18px;height:18px;cursor:nwse-resize;background:linear-gradient(135deg,transparent 45%,#ff6a00 46%,#ff6a00 55%,transparent 56%);z-index:30";
+overlay.style.cssText=
+"position:absolute;"+
+"inset:0;"+
+"width:100%;"+
+"height:100%;"+
+"border:0;"+
+"background:#181818;"+
+"z-index:5;"+
+"opacity:1;"+
+"transition:opacity .45s";
 
-body.append(nav,frame,overlay,status,resize);
 
-p.append(bar,body);
+overlay.setAttribute(
+    "allow",
+    "autoplay;fullscreen"
+);
+
+
+/* =========================================================
+   STATUS
+   ========================================================= */
+
+const status=document.createElement("span");
+
+status.style.cssText=
+"position:absolute;"+
+"left:10px;"+
+"bottom:7px;"+
+"padding:4px 7px;"+
+"background:rgba(0,0,0,.65);"+
+"color:#fff;"+
+"border-radius:5px;"+
+"font:10px Arial;"+
+"z-index:25;"+
+"pointer-events:none";
+
+status.textContent="Starting...";
+
+
+/* =========================================================
+   RESIZE HANDLE
+   ========================================================= */
+
+resize.style.cssText=
+"position:absolute;"+
+"right:0;"+
+"bottom:0;"+
+"width:18px;"+
+"height:18px;"+
+"cursor:nwse-resize;"+
+"background:linear-gradient(135deg,transparent 45%,#ff6a00 46%,#ff6a00 55%,transparent 56%);"+
+"z-index:30";
+
+
+body.append(
+    nav,
+    frame,
+    overlay,
+    status,
+    resize
+);
+
+p.append(
+    bar,
+    body
+);
 
 document.body.appendChild(p);
+
+
+/* =========================================================
+   STATE
+   ========================================================= */
 
 let dark=saved.dark==="1";
 let fs=false;
@@ -455,8 +798,10 @@ let resizing=false;
 
 let dx=0;
 let dy=0;
+
 let rw=0;
 let rh=0;
+
 let rx=0;
 let ry=0;
 
@@ -465,1599 +810,3031 @@ let commandInput=null;
 let commandMenu=null;
 
 let specialPanel=null;
+
 let specialDrag=false;
 let specialDX=0;
 let specialDY=0;
 
 let hideTimer=null;
+
 let startTime=Date.now();
 
-let destinationUrl=saved.destinationUrl||DEFAULT_DESTINATION;
-let loadingUrl=saved.loadingUrl||"about:blank";
+let destinationUrl=
+    saved.destinationUrl||
+    DEFAULT_DESTINATION;
+
+let loadingUrl=
+    saved.loadingUrl||
+    "about:blank";
 
 let minDelay=Number(saved.minDelay);
 let maxDelay=Number(saved.maxDelay);
 
-if(!Number.isFinite(minDelay))minDelay=DEFAULT_MIN_DELAY;
-if(!Number.isFinite(maxDelay))maxDelay=DEFAULT_MAX_DELAY;
+if(!Number.isFinite(minDelay)){
+    minDelay=DEFAULT_MIN_DELAY;
+}
+
+if(!Number.isFinite(maxDelay)){
+    maxDelay=DEFAULT_MAX_DELAY;
+}
+
+
+/* =========================================================
+   KEYBINDS
+   ========================================================= */
 
 const defaultBinds={
-"ctrl+shift+p":"panel",
-"ctrl+shift+c":"console",
-"ctrl+shift+m":"minimize",
-"ctrl+shift+f":"fullscreen",
-"ctrl+shift+r":"reload",
-"escape":"hide"
+    "ctrl+shift+p":"panel",
+    "ctrl+shift+c":"console",
+    "ctrl+shift+m":"minimize",
+    "ctrl+shift+f":"fullscreen",
+    "ctrl+shift+r":"reload",
+    "escape":"hide"
 };
 
-const binds=Object.assign({},defaultBinds,saved.binds||{});
+const binds=Object.assign(
+    {},
+    defaultBinds,
+    saved.binds||{}
+);
+
+
+/* =========================================================
+   SAVE
+   ========================================================= */
 
 function getState(){
-return{
-left:p.style.left,
-top:p.style.top,
-width:p.style.width,
-height:p.style.height,
-opacity:p.style.opacity,
-radius:p.style.borderRadius,
-dark:dark?"1":"0",
-compact:compactMode?"1":"0",
-binds:binds,
-destinationUrl:destinationUrl,
-loadingUrl:loadingUrl,
-minDelay:minDelay,
-maxDelay:maxDelay
-};
+
+    return{
+        left:p.style.left,
+        top:p.style.top,
+
+        width:p.style.width,
+        height:p.style.height,
+
+        opacity:p.style.opacity,
+
+        radius:p.style.borderRadius,
+
+        dark:dark?"1":"0",
+
+        compact:compactMode?"1":"0",
+
+        binds:binds,
+
+        destinationUrl:destinationUrl,
+
+        loadingUrl:loadingUrl,
+
+        minDelay:minDelay,
+
+        maxDelay:maxDelay
+    };
 }
+
 
 function save(){
-try{
-localStorage.setItem(KEY,JSON.stringify(getState()));
-}catch(e){}
+
+    try{
+
+        localStorage.setItem(
+            KEY,
+            JSON.stringify(getState())
+        );
+
+    }catch(e){}
 }
+
+
+/* =========================================================
+   TOAST
+   ========================================================= */
 
 function toast(text,type="info"){
-const old=document.getElementById(TOAST);
 
-if(old)old.remove();
+    const old=document.getElementById(TOAST);
 
-const t=document.createElement("div");
+    if(old)old.remove();
 
-t.id=TOAST;
-t.textContent=text;
+    const t=document.createElement("div");
 
-Object.assign(t.style,{
-position:"fixed",
-right:"18px",
-bottom:"18px",
-zIndex:"2147483647",
-background:type==="error"?"#c63b3b":type==="success"?"#15915c":"#181818",
-color:"#fff",
-padding:"10px 14px",
-borderRadius:"9px",
-font:"12px Arial",
-boxShadow:"0 10px 30px rgba(0,0,0,.3)",
-transition:".2s",
-opacity:"0",
-transform:"translateY(8px)"
-});
+    t.id=TOAST;
 
-document.body.appendChild(t);
+    t.textContent=text;
 
-requestAnimationFrame(()=>{
-t.style.opacity="1";
-t.style.transform="translateY(0)";
-});
+    Object.assign(t.style,{
 
-setTimeout(()=>{
-t.style.opacity="0";
-t.style.transform="translateY(8px)";
+        position:"fixed",
 
-setTimeout(()=>{
-t.remove();
-},250);
+        right:"18px",
+        bottom:"18px",
 
-},1800);
+        zIndex:"2147483647",
+
+        background:
+            type==="error"
+                ?"#c63b3b"
+                :type==="success"
+                    ?"#15915c"
+                    :"#181818",
+
+        color:"#fff",
+
+        padding:"10px 14px",
+
+        borderRadius:"9px",
+
+        font:"12px Arial",
+
+        boxShadow:"0 10px 30px rgba(0,0,0,.3)",
+
+        transition:".2s",
+
+        opacity:"0",
+
+        transform:"translateY(8px)"
+    });
+
+    document.body.appendChild(t);
+
+    requestAnimationFrame(()=>{
+
+        t.style.opacity="1";
+
+        t.style.transform="translateY(0)";
+    });
+
+    setTimeout(()=>{
+
+        t.style.opacity="0";
+
+        t.style.transform="translateY(8px)";
+
+        setTimeout(()=>{
+            t.remove();
+        },250);
+
+    },1800);
 }
+
+
+/* =========================================================
+   THEME
+   ========================================================= */
 
 function applyTheme(){
-const bg=dark?"#161616":"#fff";
-const fg=dark?"#eee":"#222";
-const cb=dark?"#202020":"#f5f5f5";
-const border=dark?"#333":"#ddd";
 
-p.style.background=bg;
+    const bg=dark?"#161616":"#fff";
+    const fg=dark?"#eee":"#222";
+    const cb=dark?"#202020":"#f5f5f5";
+    const border=dark?"#333":"#ddd";
 
-nav.style.background=cb;
-nav.style.borderColor=border;
+    p.style.background=bg;
 
-urlInput.style.background=dark?"#1c1c1c":"#fff";
-urlInput.style.color=fg;
-urlInput.style.borderColor=border;
+    nav.style.background=cb;
+    nav.style.borderColor=border;
 
-document.querySelectorAll("#"+ID+" .capAction").forEach(b=>{
-b.style.background=dark?"#222":"#fff";
-b.style.color=fg;
-b.style.borderColor=border;
-});
+    urlInput.style.background=
+        dark?"#1c1c1c":"#fff";
 
-if(specialPanel){
-specialPanel.classList.toggle("dark",dark);
+    urlInput.style.color=fg;
+
+    urlInput.style.borderColor=border;
+
+
+    document
+        .querySelectorAll(
+            "#"+ID+" .capAction"
+        )
+        .forEach(b=>{
+
+            b.style.background=
+                dark?"#222":"#fff";
+
+            b.style.color=fg;
+
+            b.style.borderColor=border;
+        });
+
+
+    if(specialPanel){
+
+        specialPanel.classList.toggle(
+            "dark",
+            dark
+        );
+    }
+
+
+    if(devConsole){
+        applyConsoleTheme();
+    }
+
+
+    save();
 }
 
-if(devConsole)applyConsoleTheme();
 
-save();
-}
+/* =========================================================
+   COMPACT
+   ========================================================= */
 
 function applyCompact(){
-if(compactMode){
-nav.style.display="none";
-bar.style.height="38px";
-}else{
-nav.style.display="flex";
-bar.style.height="44px";
+
+    if(compactMode){
+
+        nav.style.display="none";
+
+        bar.style.height="38px";
+
+    }else{
+
+        nav.style.display="flex";
+
+        bar.style.height="44px";
+    }
+
+    save();
 }
 
-save();
-}
+
+/* =========================================================
+   BUILT-IN LOADER
+   ========================================================= */
 
 function createLoader(){
-overlay.srcdoc=`<!doctype html><html><head><meta charset="utf-8"><style>
-html,body{margin:0;width:100%;height:100%;overflow:hidden}
-body{display:flex;align-items:center;justify-content:center;background:#181818;color:#fff;font-family:Arial}
-.wrap{text-align:center}
-.logo{width:18px;height:18px;margin:auto auto 15px;border-radius:50%;background:#ff6a00;box-shadow:0 0 25px #ff6a00;animation:p 1.2s infinite}
-.title{font-size:20px;font-weight:700}
-.sub{margin-top:8px;color:#aaa;font-size:12px}
-.loader{width:190px;height:4px;background:#333;border-radius:8px;overflow:hidden;margin:22px auto}
-.loader span{display:block;width:45%;height:100%;background:#ff6a00;border-radius:8px;animation:l 1.2s infinite}
-@keyframes p{50%{transform:scale(1.4);opacity:.6}}
-@keyframes l{0%{transform:translateX(-110%)}100%{transform:translateX(440%)}}
-</style></head><body><div class="wrap"><div class="logo"></div><div class="title">CiphAnon Studios</div><div class="sub">Loading destination...</div><div class="loader"><span></span></div></div></body></html>`;
+
+    overlay.srcdoc=`
+
+<!doctype html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8">
+
+<style>
+
+html,body{
+    margin:0;
+    width:100%;
+    height:100%;
+    overflow:hidden;
 }
+
+body{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+
+    background:#181818;
+    color:#fff;
+
+    font-family:Arial;
+}
+
+.wrap{
+    text-align:center;
+}
+
+.logo{
+    width:18px;
+    height:18px;
+
+    margin:auto auto 15px;
+
+    border-radius:50%;
+
+    background:#ff6a00;
+
+    box-shadow:0 0 25px #ff6a00;
+
+    animation:p 1.2s infinite;
+}
+
+.title{
+    font-size:20px;
+    font-weight:700;
+}
+
+.sub{
+    margin-top:8px;
+
+    color:#aaa;
+
+    font-size:12px;
+}
+
+.loader{
+    width:190px;
+    height:4px;
+
+    background:#333;
+
+    border-radius:8px;
+
+    overflow:hidden;
+
+    margin:22px auto;
+}
+
+.loader span{
+    display:block;
+
+    width:45%;
+    height:100%;
+
+    background:#ff6a00;
+
+    border-radius:8px;
+
+    animation:l 1.2s infinite;
+}
+
+@keyframes p{
+
+    50%{
+        transform:scale(1.4);
+        opacity:.6;
+    }
+
+}
+
+@keyframes l{
+
+    0%{
+        transform:translateX(-110%);
+    }
+
+    100%{
+        transform:translateX(440%);
+    }
+
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div class="wrap">
+
+<div class="logo"></div>
+
+<div class="title">
+CiphAnon Studios
+</div>
+
+<div class="sub">
+Loading destination...
+</div>
+
+<div class="loader">
+<span></span>
+</div>
+
+</div>
+
+</body>
+
+</html>
+
+`;
+}
+
+
+/* =========================================================
+   LOADING
+   ========================================================= */
 
 function startLoading(){
-if(hideTimer)clearTimeout(hideTimer);
 
-overlay.style.display="block";
-overlay.style.opacity="1";
+    if(hideTimer){
+        clearTimeout(hideTimer);
+    }
 
-if(loadingUrl&&loadingUrl!=="about:blank"){
-overlay.srcdoc="";
-overlay.src=loadingUrl;
-}else{
-overlay.src="";
-createLoader();
+    overlay.style.display="block";
+
+    overlay.style.opacity="1";
+
+
+    if(
+        loadingUrl &&
+        loadingUrl!=="about:blank"
+    ){
+
+        overlay.srcdoc="";
+
+        overlay.src=loadingUrl;
+
+    }else{
+
+        overlay.src="";
+
+        createLoader();
+    }
+
+
+    const low=Math.max(
+        0,
+        Math.min(minDelay,maxDelay)
+    );
+
+    const high=Math.max(
+        low,
+        Math.max(minDelay,maxDelay)
+    );
+
+
+    const delay=
+        Math.floor(
+            Math.random()*
+            (high-low+1)
+        )+low;
+
+
+    const started=Date.now();
+
+
+    const interval=setInterval(()=>{
+
+        const pct=
+            delay===0
+                ?100
+                :clamp(
+                    Math.floor(
+                        (Date.now()-started)/
+                        delay*
+                        100
+                    ),
+                    0,
+                    99
+                );
+
+        status.textContent=
+            "Loading "+pct+"%";
+
+    },100);
+
+
+    hideTimer=setTimeout(()=>{
+
+        clearInterval(interval);
+
+        overlay.style.opacity="0";
+
+        status.textContent="Ready";
+
+
+        setTimeout(()=>{
+
+            overlay.style.display="none";
+
+            overlay.src="";
+
+            overlay.srcdoc="";
+
+        },500);
+
+    },delay);
 }
 
-const low=Math.max(0,Math.min(minDelay,maxDelay));
-const high=Math.max(low,Math.max(minDelay,maxDelay));
 
-const delay=Math.floor(Math.random()*(high-low+1))+low;
-
-let started=Date.now();
-
-const interval=setInterval(()=>{
-const pct=delay===0?100:clamp(Math.floor((Date.now()-started)/delay*100),0,99);
-status.textContent="Loading "+pct+"%";
-},100);
-
-hideTimer=setTimeout(()=>{
-clearInterval(interval);
-
-overlay.style.opacity="0";
-
-status.textContent="Ready";
-
-setTimeout(()=>{
-overlay.style.display="none";
-overlay.src="";
-overlay.srcdoc="";
-},500);
-
-},delay);
-}
+/* =========================================================
+   NAVIGATION
+   ========================================================= */
 
 function reloadPage(){
-status.textContent="Reloading...";
 
-frame.src=destinationUrl;
+    status.textContent="Reloading...";
 
-startLoading();
+    frame.dataset.destination=
+        destinationUrl;
 
-updateSpecialButton(destinationUrl);
+    frame.src=
+        destinationUrl;
+
+    startLoading();
+
+    updateSpecialButton(
+        destinationUrl
+    );
 }
+
 
 function navigate(u){
-if(!valid(u)){
-toast("Invalid URL","error");
-return;
+
+    if(!valid(u)){
+
+        toast(
+            "Invalid URL",
+            "error"
+        );
+
+        return;
+    }
+
+
+    destinationUrl=
+        new URL(
+            u,
+            location.href
+        ).href;
+
+
+    frame.dataset.destination=
+        destinationUrl;
+
+    urlInput.value=
+        destinationUrl;
+
+
+    frame.src=
+        destinationUrl;
+
+
+    save();
+
+    startLoading();
+
+    updateSpecialButton(
+        destinationUrl
+    );
 }
 
-destinationUrl=u;
 
-frame.dataset.destination=u;
-
-urlInput.value=u;
-
-frame.src=u;
-
-save();
-
-startLoading();
-
-updateSpecialButton(u);
-}
+/* =========================================================
+   HIDE / SHOW
+   ========================================================= */
 
 function hidePanel(){
-p.style.display="none";
 
-let m=document.getElementById(MIN);
+    p.style.display="none";
 
-if(!m){
-m=document.createElement("button");
 
-m.id=MIN;
+    let m=document.getElementById(MIN);
 
-m.textContent="C";
 
-m.dataset.tip="Restore CiphAnon Panel";
+    if(!m){
 
-m.style.cssText="position:fixed;right:16px;bottom:16px;width:46px;height:46px;border:0;border-radius:13px;background:#181818;color:#ff6a00;font-weight:800;font-size:16px;z-index:2147483647;cursor:pointer;box-shadow:0 10px 30px rgba(0,0,0,.3)";
+        m=document.createElement("button");
 
-m.onclick=showPanel;
+        m.id=MIN;
 
-m.onmouseenter=()=>showTip(m);
-m.onmouseleave=hideTip;
+        m.textContent="C";
 
-document.body.appendChild(m);
+        m.dataset.tip=
+            "Restore CiphAnon Panel";
+
+
+        m.style.cssText=
+            "position:fixed;"+
+            "right:16px;"+
+            "bottom:16px;"+
+            "width:46px;"+
+            "height:46px;"+
+            "border:0;"+
+            "border-radius:13px;"+
+            "background:#181818;"+
+            "color:#ff6a00;"+
+            "font-weight:800;"+
+            "font-size:16px;"+
+            "z-index:2147483647;"+
+            "cursor:pointer;"+
+            "box-shadow:0 10px 30px rgba(0,0,0,.3)";
+
+
+        m.onclick=showPanel;
+
+        m.onmouseenter=
+            ()=>showTip(m);
+
+        m.onmouseleave=
+            hideTip;
+
+
+        document.body.appendChild(m);
+    }
 }
-}
+
 
 function showPanel(){
-p.style.display="flex";
 
-const m=document.getElementById(MIN);
+    p.style.display="flex";
 
-if(m)m.remove();
+    const m=
+        document.getElementById(MIN);
+
+    if(m)m.remove();
 }
+
 
 function togglePanel(){
-if(p.style.display==="none"){
-showPanel();
-}else{
-hidePanel();
+
+    if(p.style.display==="none"){
+        showPanel();
+    }else{
+        hidePanel();
+    }
 }
-}
+
+
+/* =========================================================
+   SPECIAL LIST
+   ========================================================= */
 
 function createSpecialPanel(){
-if(specialPanel){
-specialPanel.style.display="flex";
-return;
+
+    if(specialPanel){
+
+        specialPanel.style.display="flex";
+
+        specialPanel.style.zIndex=
+            "2147483647";
+
+        return;
+    }
+
+
+    specialPanel=
+        document.createElement("div");
+
+    specialPanel.id=SPECIAL;
+
+
+    const head=
+        document.createElement("div");
+
+    head.className="specialHead";
+
+
+    const specialTitle=
+        document.createElement("div");
+
+    specialTitle.className=
+        "specialTitle";
+
+
+    specialTitle.innerHTML=
+        '<span class="specialDot"></span>'+
+        '<span>'+
+        SPECIAL_PAGE.panelTitle+
+        '</span>';
+
+
+    const closeBtn=
+        document.createElement("button");
+
+    closeBtn.className=
+        "specialClose";
+
+    closeBtn.textContent="×";
+
+    closeBtn.dataset.tip=
+        "Close list";
+
+
+    closeBtn.onclick=()=>{
+        closeSpecialPanel();
+    };
+
+
+    head.append(
+        specialTitle,
+        closeBtn
+    );
+
+
+    const listBody=
+        document.createElement("div");
+
+    listBody.className=
+        "specialBody";
+
+
+    const items=
+        Array.isArray(SPECIAL_PAGE.items)
+            ?SPECIAL_PAGE.items
+            :[];
+
+
+    if(items.length){
+
+        items.forEach(
+            (item,index)=>{
+
+                const row=
+                    document.createElement(
+                        "div"
+                    );
+
+                row.className=
+                    "specialItem";
+
+                row.textContent=
+                    item;
+
+                row.dataset.index=
+                    index+1;
+
+                listBody.appendChild(row);
+            }
+        );
+
+    }else{
+
+        const empty=
+            document.createElement(
+                "div"
+            );
+
+        empty.className=
+            "specialEmpty";
+
+        empty.textContent=
+            "No items added yet.";
+
+        listBody.appendChild(empty);
+    }
+
+
+    const footer=
+        document.createElement("div");
+
+    footer.className=
+        "specialFooter";
+
+    footer.textContent=
+        items.length+
+        " item"+
+        (
+            items.length===1
+                ?""
+                :"s"
+        );
+
+
+    specialPanel.append(
+        head,
+        listBody,
+        footer
+    );
+
+
+    document.body.appendChild(
+        specialPanel
+    );
+
+
+    applyTheme();
+
+
+    /* Dragging */
+
+    head.addEventListener(
+        "mousedown",
+        e=>{
+
+            if(e.target.closest("button")){
+                return;
+            }
+
+            specialDrag=true;
+
+            const r=
+                specialPanel.getBoundingClientRect();
+
+            specialDX=
+                e.clientX-r.left;
+
+            specialDY=
+                e.clientY-r.top;
+
+            e.preventDefault();
+        }
+    );
+
+
+    const moveSpecial=e=>{
+
+        if(!specialDrag)return;
+
+        const r=
+            specialPanel.getBoundingClientRect();
+
+        let x=
+            e.clientX-specialDX;
+
+        let y=
+            e.clientY-specialDY;
+
+
+        x=clamp(
+            x,
+            0,
+            Math.max(
+                0,
+                window.innerWidth-r.width
+            )
+        );
+
+
+        y=clamp(
+            y,
+            0,
+            Math.max(
+                0,
+                window.innerHeight-r.height
+            )
+        );
+
+
+        specialPanel.style.left=
+            x+"px";
+
+        specialPanel.style.top=
+            y+"px";
+
+        specialPanel.style.transform=
+            "none";
+    };
+
+
+    document.addEventListener(
+        "mousemove",
+        moveSpecial
+    );
+
+
+    document.addEventListener(
+        "mouseup",
+        ()=>{
+            specialDrag=false;
+        }
+    );
+
+
+    specialPanel.addEventListener(
+        "mousedown",
+        ()=>{
+            specialPanel.style.zIndex=
+                "2147483647";
+        }
+    );
 }
 
-specialPanel=document.createElement("div");
-
-specialPanel.id=SPECIAL;
-
-const head=document.createElement("div");
-
-head.className="specialHead";
-
-const specialTitle=document.createElement("div");
-
-specialTitle.className="specialTitle";
-
-specialTitle.innerHTML='<span class="specialDot"></span><span>'+SPECIAL_PAGE.panelTitle+'</span>';
-
-const closeBtn=document.createElement("button");
-
-closeBtn.className="specialClose";
-
-closeBtn.textContent="×";
-
-closeBtn.dataset.tip="Close list";
-
-closeBtn.onclick=()=>{
-closeSpecialPanel();
-};
-
-head.append(specialTitle,closeBtn);
-
-const listBody=document.createElement("div");
-
-listBody.className="specialBody";
-
-if(Array.isArray(SPECIAL_PAGE.items)&&SPECIAL_PAGE.items.length){
-
-SPECIAL_PAGE.items.forEach((item,index)=>{
-
-const row=document.createElement("div");
-
-row.className="specialItem";
-
-row.textContent=item;
-
-row.dataset.index=index+1;
-
-listBody.appendChild(row);
-
-});
-
-}else{
-
-const empty=document.createElement("div");
-
-empty.className="specialEmpty";
-
-empty.textContent="No items added yet.";
-
-listBody.appendChild(empty);
-
-}
-
-const footer=document.createElement("div");
-
-footer.className="specialFooter";
-
-footer.textContent=SPECIAL_PAGE.items.length+" item"+(SPECIAL_PAGE.items.length===1?"":"s");
-
-specialPanel.append(head,listBody,footer);
-
-document.body.appendChild(specialPanel);
-
-applyTheme();
-
-head.addEventListener("mousedown",e=>{
-if(e.target.closest("button"))return;
-
-specialDrag=true;
-
-const r=specialPanel.getBoundingClientRect();
-
-specialDX=e.clientX-r.left;
-specialDY=e.clientY-r.top;
-
-e.preventDefault();
-});
-
-document.addEventListener("mousemove",moveSpecial);
-
-document.addEventListener("mouseup",()=>{
-specialDrag=false;
-});
-
-function moveSpecial(e){
-if(!specialDrag)return;
-
-const r=specialPanel.getBoundingClientRect();
-
-let x=e.clientX-specialDX;
-let y=e.clientY-specialDY;
-
-x=clamp(x,0,window.innerWidth-r.width);
-y=clamp(y,0,window.innerHeight-r.height);
-
-specialPanel.style.left=x+"px";
-specialPanel.style.top=y+"px";
-specialPanel.style.transform="none";
-}
-
-specialPanel.addEventListener("mousedown",()=>{
-specialPanel.style.zIndex="2147483647";
-});
-
-}
 
 function closeSpecialPanel(){
-if(specialPanel){
-specialPanel.remove();
-specialPanel=null;
+
+    if(specialPanel){
+
+        specialPanel.remove();
+
+        specialPanel=null;
+    }
 }
-}
+
+
+/* =========================================================
+   SPECIAL BUTTON DETECTION
+   ========================================================= */
 
 function updateSpecialButton(currentUrl){
-const match=urlMatches(currentUrl);
 
-specialBtn.style.display=match?"block":"none";
+    const match=
+        urlMatches(currentUrl);
 
-if(!match){
-closeSpecialPanel();
+
+    specialBtn.style.display=
+        match
+            ?"block"
+            :"none";
+
+
+    if(!match){
+
+        closeSpecialPanel();
+    }
 }
-}
+
+
+/* =========================================================
+   KEY NORMALIZER
+   ========================================================= */
 
 function normalizeKey(e){
-const a=[];
 
-if(e.ctrlKey)a.push("ctrl");
-if(e.shiftKey)a.push("shift");
-if(e.altKey)a.push("alt");
-if(e.metaKey)a.push("meta");
+    const a=[];
 
-let k=e.key.toLowerCase();
+    if(e.ctrlKey)a.push("ctrl");
+    if(e.shiftKey)a.push("shift");
+    if(e.altKey)a.push("alt");
+    if(e.metaKey)a.push("meta");
 
-if(k===" ")k="space";
 
-if(!["control","shift","alt","meta"].includes(k)){
-a.push(k);
+    let k=e.key.toLowerCase();
+
+
+    if(k===" "){
+        k="space";
+    }
+
+
+    if(
+        ![
+            "control",
+            "shift",
+            "alt",
+            "meta"
+        ].includes(k)
+    ){
+        a.push(k);
+    }
+
+
+    return a.join("+");
 }
 
-return a.join("+");
-}
+
+/* =========================================================
+   ACTION HANDLER
+   ========================================================= */
 
 function runAction(name){
-if(name==="panel"){
-togglePanel();
-return;
+
+    switch(name){
+
+        case"panel":
+            togglePanel();
+            break;
+
+        case"console":
+            createConsole();
+            break;
+
+        case"minimize":
+            hidePanel();
+            break;
+
+        case"fullscreen":
+            full.click();
+            break;
+
+        case"reload":
+            reloadPage();
+            break;
+
+        case"hide":
+            hidePanel();
+            break;
+
+        case"show":
+            showPanel();
+            break;
+
+        case"special":
+            if(urlMatches(destinationUrl)){
+                createSpecialPanel();
+            }
+            break;
+    }
 }
 
-if(name==="console"){
-createConsole();
-return;
-}
 
-if(name==="minimize"){
-togglePanel();
-return;
-}
-
-if(name==="fullscreen"){
-full.click();
-return;
-}
-
-if(name==="reload"){
-reloadPage();
-return;
-}
-
-if(name==="hide"){
-hidePanel();
-return;
-}
-
-if(name==="show"){
-showPanel();
-return;
-}
-}
+/* =========================================================
+   COMMANDS
+   ========================================================= */
 
 const commands=[
-["/help","Show all commands"],
-["/status","Show panel status"],
-["/uptime","Show session uptime"],
-["/reload","Reload destination"],
-["/back","Go back"],
-["/forward","Go forward"],
-["/url","Show current URL"],
-["/go URL","Navigate to URL"],
-["/destination URL","Set destination"],
-["/loading URL","Set custom loading page"],
-["/loader","Use built-in loader"],
-["/delay MIN MAX","Set loading delay"],
-["/theme","Toggle theme"],
-["/opacity","Cycle opacity"],
-["/zoom NUMBER","Set iframe zoom"],
-["/size WIDTH HEIGHT","Resize panel"],
-["/position X Y","Move panel"],
-["/snap LEFT|RIGHT|TOP|BOTTOM","Snap panel"],
-["/hide","Hide panel"],
-["/show","Show panel"],
-["/toggle","Toggle panel"],
-["/compact","Toggle compact mode"],
-["/toolbar","Toggle toolbar"],
-["/fullscreen","Toggle fullscreen"],
-["/minimize","Minimize/restore"],
-["/special","Open special list"],
-["/special-close","Close special list"],
-["/console","Open console"],
-["/clear","Clear console"],
-["/bind KEY ACTION","Create keybind"],
-["/unbind KEY","Remove keybind"],
-["/binds","Show keybinds"],
-["/reset","Reset saved settings"]
+
+    ["/help","Show all commands"],
+    ["/status","Show panel status"],
+    ["/uptime","Show session uptime"],
+
+    ["/reload","Reload destination"],
+    ["/back","Go back"],
+    ["/forward","Go forward"],
+
+    ["/url","Show current URL"],
+    ["/go URL","Navigate to URL"],
+
+    ["/destination URL","Set destination"],
+    ["/loading URL","Set custom loading page"],
+    ["/loader","Use built-in loader"],
+
+    ["/delay MIN MAX","Set loading delay"],
+
+    ["/theme","Toggle theme"],
+    ["/opacity","Cycle opacity"],
+    ["/zoom NUMBER","Set iframe zoom"],
+
+    ["/size WIDTH HEIGHT","Resize panel"],
+    ["/position X Y","Move panel"],
+    ["/snap LEFT|RIGHT|TOP|BOTTOM","Snap panel"],
+
+    ["/hide","Hide panel"],
+    ["/show","Show panel"],
+    ["/toggle","Toggle panel"],
+
+    ["/compact","Toggle compact mode"],
+    ["/toolbar","Toggle toolbar"],
+
+    ["/fullscreen","Toggle fullscreen"],
+    ["/minimize","Minimize/restore"],
+
+    ["/special","Open special list"],
+    ["/special-close","Close special list"],
+
+    ["/console","Open console"],
+    ["/clear","Clear console"],
+
+    ["/bind KEY ACTION","Create keybind"],
+    ["/unbind KEY","Remove keybind"],
+    ["/binds","Show keybinds"],
+
+    ["/reset","Reset saved settings"]
 ];
 
+
+/* =========================================================
+   CONSOLE OUTPUT
+   ========================================================= */
+
 function addLine(text,type=""){
-if(!devConsole)return;
 
-const line=document.createElement("div");
+    if(!devConsole)return;
 
-line.className="ciphConsoleLine";
 
-line.style.cssText="padding:4px 0;border-bottom:1px solid #ddd;font:12px monospace;white-space:pre-wrap;word-break:break-word";
+    const line=
+        document.createElement("div");
 
-if(type==="error")line.style.color="#e04848";
-if(type==="success")line.style.color="#15915c";
-if(type==="command")line.style.color="#ff6a00";
+    line.className=
+        "ciphConsoleLine";
 
-line.textContent=text;
 
-const out=devConsole.querySelector(".ciphConsoleOutput");
+    line.style.cssText=
+        "padding:4px 0;"+
+        "border-bottom:1px solid #ddd;"+
+        "font:12px monospace;"+
+        "white-space:pre-wrap;"+
+        "word-break:break-word";
 
-out.appendChild(line);
 
-out.scrollTop=out.scrollHeight;
+    if(type==="error"){
+        line.style.color="#e04848";
+    }
+
+    if(type==="success"){
+        line.style.color="#15915c";
+    }
+
+    if(type==="command"){
+        line.style.color="#ff6a00";
+    }
+
+
+    line.textContent=text;
+
+
+    const out=
+        devConsole.querySelector(
+            ".ciphConsoleOutput"
+        );
+
+
+    out.appendChild(line);
+
+    out.scrollTop=
+        out.scrollHeight;
 }
+
+
+/* =========================================================
+   CONSOLE THEME
+   ========================================================= */
 
 function applyConsoleTheme(){
-if(!devConsole)return;
 
-devConsole.style.background=dark?"#111":"#f7f7f7";
-devConsole.style.color=dark?"#eee":"#222";
+    if(!devConsole)return;
 
-if(commandInput){
-commandInput.style.background=dark?"#1c1c1c":"#fff";
-commandInput.style.color=dark?"#eee":"#222";
+
+    devConsole.style.background=
+        dark
+            ?" #111"
+            :"#f7f7f7";
+
+
+    devConsole.style.color=
+        dark
+            ?" #eee"
+            :"#222";
+
+
+    if(commandInput){
+
+        commandInput.style.background=
+            dark
+                ?" #1c1c1c"
+                :"#fff";
+
+        commandInput.style.color=
+            dark
+                ?" #eee"
+                :"#222";
+    }
 }
-}
+
+
+/* =========================================================
+   COMMAND MENU
+   ========================================================= */
 
 function updateMenu(v){
-if(!commandMenu)return;
 
-const matches=commands.filter(x=>x[0].startsWith(v.toLowerCase()));
+    if(!commandMenu)return;
 
-commandMenu.innerHTML="";
 
-if(!v.startsWith("/")||!matches.length){
-commandMenu.style.display="none";
-return;
+    const matches=
+        commands.filter(
+            x=>x[0].startsWith(
+                v.toLowerCase()
+            )
+        );
+
+
+    commandMenu.innerHTML="";
+
+
+    if(
+        !v.startsWith("/")||
+        !matches.length
+    ){
+
+        commandMenu.style.display=
+            "none";
+
+        return;
+    }
+
+
+    matches.forEach(
+        (x,i)=>{
+
+            const b=
+                document.createElement(
+                    "button"
+                );
+
+
+            b.textContent=
+                x[0]+"  "+x[1];
+
+
+            b.style.cssText=
+                "display:block;"+
+                "width:100%;"+
+                "padding:8px;"+
+                "text-align:left;"+
+                "border:0;"+
+                "background:"+
+                (
+                    i===0
+                        ?" #ff6a00"
+                        :dark
+                            ?" #191919"
+                            :"#fff"
+                )+
+                ";color:"+
+                (
+                    i===0
+                        ?" #fff"
+                        :dark
+                            ?" #eee"
+                            :"#222"
+                )+
+                ";font:12px monospace;"+
+                "cursor:pointer";
+
+
+            b.onclick=()=>{
+
+                commandInput.value=
+                    x[0]+" ";
+
+                commandInput.focus();
+
+                updateMenu(
+                    commandInput.value
+                );
+            };
+
+
+            commandMenu.appendChild(b);
+        }
+    );
+
+
+    commandMenu.style.display=
+        "block";
 }
 
-matches.forEach((x,i)=>{
 
-const b=document.createElement("button");
-
-b.textContent=x[0]+"  "+x[1];
-
-b.style.cssText="display:block;width:100%;padding:8px;text-align:left;border:0;background:"+(i===0?"#ff6a00":dark?"#191919":"#fff")+";color:"+(i===0?"#fff":dark?"#eee":"#222")+";font:12px monospace;cursor:pointer";
-
-b.onclick=()=>{
-commandInput.value=x[0]+" ";
-commandInput.focus();
-updateMenu(commandInput.value);
-};
-
-commandMenu.appendChild(b);
-
-});
-
-commandMenu.style.display="block";
-}
+/* =========================================================
+   COMMAND RUNNER
+   ========================================================= */
 
 function runCommand(raw){
-const parts=raw.trim().split(/\s+/);
 
-const c=(parts.shift()||"").toLowerCase();
+    const parts=
+        raw.trim().split(/\s+/);
 
-const a=parts;
+    const c=
+        (parts.shift()||"").toLowerCase();
 
-if(c==="/help"){
-commands.forEach(x=>addLine(x[0]+" — "+x[1]));
-return;
+    const a=parts;
+
+
+    if(c==="/help"){
+
+        commands.forEach(
+            x=>addLine(
+                x[0]+" — "+x[1]
+            )
+        );
+
+        return;
+    }
+
+
+    if(c==="/status"){
+
+        addLine(
+            "Panel: "+
+            (
+                p.style.display==="none"
+                    ?"hidden"
+                    :"visible"
+            )
+        );
+
+        addLine(
+            "Theme: "+
+            (dark?"dark":"light")
+        );
+
+        addLine(
+            "Size: "+
+            p.offsetWidth+
+            "×"+
+            p.offsetHeight
+        );
+
+        addLine(
+            "Opacity: "+
+            Math.round(
+                parseFloat(
+                    p.style.opacity
+                )*100
+            )+
+            "%"
+        );
+
+        addLine(
+            "Destination: "+
+            destinationUrl
+        );
+
+        addLine(
+            "Special button: "+
+            (
+                urlMatches(
+                    destinationUrl
+                )
+                    ?"visible"
+                    :"hidden"
+            )
+        );
+
+        return;
+    }
+
+
+    if(c==="/uptime"){
+
+        const s=
+            Math.floor(
+                (Date.now()-startTime)/
+                1000
+            );
+
+
+        addLine(
+            "Session uptime: "+
+            Math.floor(s/3600)+
+            "h "+
+            Math.floor(s%3600/60)+
+            "m "+
+            s%60+
+            "s",
+            "success"
+        );
+
+        return;
+    }
+
+
+    if(c==="/reload"){
+
+        reloadPage();
+
+        addLine(
+            "Reloaded.",
+            "success"
+        );
+
+        return;
+    }
+
+
+    if(c==="/back"){
+
+        try{
+            frame.contentWindow.history.back();
+        }catch(e){}
+
+        addLine(
+            "Back requested."
+        );
+
+        return;
+    }
+
+
+    if(c==="/forward"){
+
+        try{
+            frame.contentWindow.history.forward();
+        }catch(e){}
+
+        addLine(
+            "Forward requested."
+        );
+
+        return;
+    }
+
+
+    if(c==="/url"){
+
+        addLine(
+            destinationUrl
+        );
+
+        return;
+    }
+
+
+    if(c==="/go"){
+
+        if(!a[0]){
+
+            addLine(
+                "Usage: /go https://example.com",
+                "error"
+            );
+
+            return;
+        }
+
+
+        navigate(a.join(" "));
+
+        return;
+    }
+
+
+    if(c==="/destination"){
+
+        if(
+            !a[0]||
+            !valid(a[0])
+        ){
+
+            addLine(
+                "Invalid URL.",
+                "error"
+            );
+
+            return;
+        }
+
+
+        destinationUrl=
+            new URL(
+                a[0],
+                location.href
+            ).href;
+
+
+        urlInput.value=
+            destinationUrl;
+
+        frame.dataset.destination=
+            destinationUrl;
+
+
+        save();
+
+        updateSpecialButton(
+            destinationUrl
+        );
+
+
+        addLine(
+            "Destination saved.",
+            "success"
+        );
+
+        return;
+    }
+
+
+    if(c==="/loading"){
+
+        if(
+            !a[0]||
+            !valid(a[0])
+        ){
+
+            addLine(
+                "Invalid URL.",
+                "error"
+            );
+
+            return;
+        }
+
+
+        loadingUrl=
+            new URL(
+                a[0],
+                location.href
+            ).href;
+
+
+        save();
+
+
+        addLine(
+            "Loading page saved.",
+            "success"
+        );
+
+        return;
+    }
+
+
+    if(c==="/loader"){
+
+        loadingUrl=
+            "about:blank";
+
+        save();
+
+
+        addLine(
+            "Built-in loader selected.",
+            "success"
+        );
+
+        return;
+    }
+
+
+    if(c==="/delay"){
+
+        const x=
+            Number(a[0]);
+
+        const y=
+            Number(a[1]);
+
+
+        if(
+            !Number.isFinite(x)||
+            !Number.isFinite(y)||
+            x<0||
+            y<0
+        ){
+
+            addLine(
+                "Usage: /delay 3000 10000",
+                "error"
+            );
+
+            return;
+        }
+
+
+        minDelay=
+            Math.min(x,y);
+
+        maxDelay=
+            Math.max(x,y);
+
+
+        save();
+
+
+        addLine(
+            "Delay set: "+
+            minDelay+
+            "-"+
+            maxDelay+
+            "ms",
+            "success"
+        );
+
+        return;
+    }
+
+
+    if(c==="/theme"){
+
+        theme.click();
+
+        return;
+    }
+
+
+    if(c==="/opacity"){
+
+        opacity.click();
+
+        return;
+    }
+
+
+    if(c==="/zoom"){
+
+        const z=
+            Number(a[0]);
+
+
+        if(
+            !Number.isFinite(z)||
+            z<25||
+            z>200
+        ){
+
+            addLine(
+                "Zoom must be 25-200.",
+                "error"
+            );
+
+            return;
+        }
+
+
+        const scale=z/100;
+
+
+        frame.style.transformOrigin=
+            "top left";
+
+        frame.style.transform=
+            "scale("+scale+")";
+
+        frame.style.width=
+            100/scale+"%";
+
+        frame.style.height=
+            100/scale+"%";
+
+
+        addLine(
+            "Zoom: "+z+"%",
+            "success"
+        );
+
+        return;
+    }
+
+
+    if(c==="/size"){
+
+        const w=
+            parseInt(a[0]);
+
+        const h=
+            parseInt(a[1]);
+
+
+        if(
+            !Number.isFinite(w)||
+            !Number.isFinite(h)
+        ){
+
+            addLine(
+                "Usage: /size 820 520",
+                "error"
+            );
+
+            return;
+        }
+
+
+        p.style.width=
+            clamp(
+                w,
+                350,
+                window.innerWidth
+            )+"px";
+
+
+        p.style.height=
+            clamp(
+                h,
+                220,
+                window.innerHeight
+            )+"px";
+
+
+        save();
+
+
+        addLine(
+            "Size updated.",
+            "success"
+        );
+
+        return;
+    }
+
+
+    if(c==="/position"){
+
+        const x=
+            parseInt(a[0]);
+
+        const y=
+            parseInt(a[1]);
+
+
+        if(
+            !Number.isFinite(x)||
+            !Number.isFinite(y)
+        ){
+
+            addLine(
+                "Usage: /position 80 80",
+                "error"
+            );
+
+            return;
+        }
+
+
+        p.style.left=
+            clamp(
+                x,
+                0,
+                Math.max(
+                    0,
+                    window.innerWidth-
+                    p.offsetWidth
+                )
+            )+"px";
+
+
+        p.style.top=
+            clamp(
+                y,
+                0,
+                Math.max(
+                    0,
+                    window.innerHeight-
+                    p.offsetHeight
+                )
+            )+"px";
+
+
+        save();
+
+
+        addLine(
+            "Position updated.",
+            "success"
+        );
+
+        return;
+    }
+
+
+    if(c==="/snap"){
+
+        const side=
+            (a[0]||"").toLowerCase();
+
+
+        if(side==="left"){
+
+            p.style.left="10px";
+
+        }else if(side==="right"){
+
+            p.style.left=
+                Math.max(
+                    0,
+                    window.innerWidth-
+                    p.offsetWidth-
+                    10
+                )+"px";
+
+        }else if(side==="top"){
+
+            p.style.top="60px";
+
+        }else if(side==="bottom"){
+
+            p.style.top=
+                Math.max(
+                    0,
+                    window.innerHeight-
+                    p.offsetHeight-
+                    10
+                )+"px";
+
+        }else{
+
+            addLine(
+                "Use left, right, top, or bottom.",
+                "error"
+            );
+
+            return;
+        }
+
+
+        save();
+
+
+        addLine(
+            "Snapped "+side+".",
+            "success"
+        );
+
+        return;
+    }
+
+
+    if(c==="/hide"){
+
+        hidePanel();
+
+        return;
+    }
+
+
+    if(c==="/show"){
+
+        showPanel();
+
+        return;
+    }
+
+
+    if(c==="/toggle"){
+
+        togglePanel();
+
+        return;
+    }
+
+
+    if(c==="/compact"){
+
+        compactMode=
+            !compactMode;
+
+        applyCompact();
+
+
+        addLine(
+            "Compact mode "+
+            (
+                compactMode
+                    ?"on"
+                    :"off"
+            ),
+            "success"
+        );
+
+        return;
+    }
+
+
+    if(c==="/toolbar"){
+
+        if(
+            nav.style.display==="none"
+        ){
+
+            nav.style.display="flex";
+
+        }else{
+
+            nav.style.display="none";
+        }
+
+
+        addLine(
+            "Toolbar "+
+            (
+                nav.style.display==="none"
+                    ?"hidden"
+                    :"visible"
+            ),
+            "success"
+        );
+
+        return;
+    }
+
+
+    if(c==="/fullscreen"){
+
+        full.click();
+
+        return;
+    }
+
+
+    if(c==="/minimize"){
+
+        hidePanel();
+
+        return;
+    }
+
+
+    if(c==="/special"){
+
+        if(
+            urlMatches(
+                destinationUrl
+            )
+        ){
+
+            createSpecialPanel();
+
+            addLine(
+                "Special list opened.",
+                "success"
+            );
+
+        }else{
+
+            addLine(
+                "Special list is unavailable on this URL.",
+                "error"
+            );
+        }
+
+        return;
+    }
+
+
+    if(c==="/special-close"){
+
+        closeSpecialPanel();
+
+        addLine(
+            "Special list closed.",
+            "success"
+        );
+
+        return;
+    }
+
+
+    if(c==="/console"){
+
+        if(devConsole){
+            addLine(
+                "Console already open."
+            );
+        }else{
+            createConsole();
+        }
+
+        return;
+    }
+
+
+    if(c==="/clear"){
+
+        if(devConsole){
+
+            devConsole.querySelector(
+                ".ciphConsoleOutput"
+            ).innerHTML="";
+        }
+
+        return;
+    }
+
+
+    if(c==="/bind"){
+
+        const k=
+            (a.shift()||"").toLowerCase();
+
+        const act=
+            (a.shift()||"").toLowerCase();
+
+
+        const allowed=[
+            "panel",
+            "console",
+            "minimize",
+            "fullscreen",
+            "reload",
+            "hide",
+            "show",
+            "special"
+        ];
+
+
+        if(
+            !k||
+            !allowed.includes(act)
+        ){
+
+            addLine(
+                "Usage: /bind ctrl+shift+p console",
+                "error"
+            );
+
+            return;
+        }
+
+
+        binds[k]=act;
+
+        save();
+
+
+        addLine(
+            "Binding saved.",
+            "success"
+        );
+
+        return;
+    }
+
+
+    if(c==="/unbind"){
+
+        const k=
+            (a[0]||"").toLowerCase();
+
+
+        if(!k){
+
+            addLine(
+                "Usage: /unbind KEY",
+                "error"
+            );
+
+            return;
+        }
+
+
+        delete binds[k];
+
+        save();
+
+
+        addLine(
+            "Binding removed.",
+            "success"
+        );
+
+        return;
+    }
+
+
+    if(c==="/binds"){
+
+        Object.keys(binds).forEach(
+            k=>{
+                addLine(
+                    k+" → "+binds[k]
+                );
+            }
+        );
+
+        return;
+    }
+
+
+    if(c==="/reset"){
+
+        try{
+            localStorage.removeItem(KEY);
+        }catch(e){}
+
+
+        addLine(
+            "Saved settings reset. Reopen bookmarklet.",
+            "success"
+        );
+
+        return;
+    }
+
+
+    addLine(
+        "Unknown command. Type /help.",
+        "error"
+    );
 }
 
-if(c==="/status"){
 
-addLine("Panel: "+(p.style.display==="none"?"hidden":"visible"));
-addLine("Theme: "+(dark?"dark":"light"));
-addLine("Size: "+p.offsetWidth+"×"+p.offsetHeight);
-addLine("Opacity: "+Math.round(parseFloat(p.style.opacity)*100)+"%");
-addLine("Destination: "+destinationUrl);
-addLine("Delay: "+minDelay+"-"+maxDelay+"ms");
-addLine("Special button: "+(urlMatches(destinationUrl)?"visible":"hidden"));
-
-return;
-}
-
-if(c==="/uptime"){
-
-const s=Math.floor((Date.now()-startTime)/1000);
-
-addLine(
-"Session uptime: "+
-Math.floor(s/3600)+"h "+
-Math.floor(s%3600/60)+"m "+
-s%60+"s",
-"success"
-);
-
-return;
-}
-
-if(c==="/reload"){
-
-reloadPage();
-
-addLine("Reloaded.","success");
-
-return;
-}
-
-if(c==="/back"){
-
-try{
-frame.contentWindow.history.back();
-}catch(e){}
-
-addLine("Back requested.");
-
-return;
-}
-
-if(c==="/forward"){
-
-try{
-frame.contentWindow.history.forward();
-}catch(e){}
-
-addLine("Forward requested.");
-
-return;
-}
-
-if(c==="/url"){
-
-addLine(destinationUrl);
-
-return;
-}
-
-if(c==="/go"){
-
-if(!a[0]){
-addLine("Usage: /go https://example.com","error");
-return;
-}
-
-navigate(a[0]);
-
-return;
-}
-
-if(c==="/destination"){
-
-if(!a[0]||!valid(a[0])){
-addLine("Invalid URL.","error");
-return;
-}
-
-destinationUrl=a[0];
-
-urlInput.value=a[0];
-
-frame.dataset.destination=a[0];
-
-save();
-
-updateSpecialButton(a[0]);
-
-addLine("Destination saved.","success");
-
-return;
-}
-
-if(c==="/loading"){
-
-if(!a[0]||!valid(a[0])){
-addLine("Invalid URL.","error");
-return;
-}
-
-loadingUrl=a[0];
-
-save();
-
-addLine("Loading page saved.","success");
-
-return;
-}
-
-if(c==="/loader"){
-
-loadingUrl="about:blank";
-
-save();
-
-addLine("Built-in loader selected.","success");
-
-return;
-}
-
-if(c==="/delay"){
-
-const x=Number(a[0]);
-const y=Number(a[1]);
-
-if(!Number.isFinite(x)||!Number.isFinite(y)||x<0||y<0){
-
-addLine("Usage: /delay 3000 10000","error");
-
-return;
-}
-
-minDelay=Math.min(x,y);
-maxDelay=Math.max(x,y);
-
-save();
-
-addLine("Delay set: "+minDelay+"-"+maxDelay+"ms","success");
-
-return;
-}
-
-if(c==="/theme"){
-
-theme.click();
-
-return;
-}
-
-if(c==="/opacity"){
-
-opacity.click();
-
-return;
-}
-
-if(c==="/zoom"){
-
-const z=Number(a[0]);
-
-if(!Number.isFinite(z)||z<25||z>200){
-
-addLine("Zoom must be 25-200.","error");
-
-return;
-}
-
-const scale=z/100;
-
-frame.style.transformOrigin="top left";
-
-frame.style.transform="scale("+scale+")";
-
-frame.style.width=100/scale+"%";
-
-frame.style.height=100/scale+"%";
-
-addLine("Zoom: "+z+"%","success");
-
-return;
-}
-
-if(c==="/size"){
-
-const w=parseInt(a[0]);
-const h=parseInt(a[1]);
-
-if(!w||!h){
-
-addLine("Usage: /size 820 520","error");
-
-return;
-}
-
-p.style.width=clamp(w,350,window.innerWidth)+"px";
-
-p.style.height=clamp(h,220,window.innerHeight)+"px";
-
-save();
-
-addLine("Size updated.","success");
-
-return;
-}
-
-if(c==="/position"){
-
-const x=parseInt(a[0]);
-const y=parseInt(a[1]);
-
-if(!Number.isFinite(x)||!Number.isFinite(y)){
-
-addLine("Usage: /position 80 80","error");
-
-return;
-}
-
-p.style.left=clamp(
-x,
-0,
-window.innerWidth-p.offsetWidth
-)+"px";
-
-p.style.top=clamp(
-y,
-0,
-window.innerHeight-p.offsetHeight
-)+"px";
-
-save();
-
-addLine("Position updated.","success");
-
-return;
-}
-
-if(c==="/snap"){
-
-const side=(a[0]||"").toLowerCase();
-
-if(side==="left"){
-
-p.style.left="10px";
-
-}
-
-else if(side==="right"){
-
-p.style.left=Math.max(
-0,
-window.innerWidth-p.offsetWidth-10
-)+"px";
-
-}
-
-else if(side==="top"){
-
-p.style.top="60px";
-
-}
-
-else if(side==="bottom"){
-
-p.style.top=Math.max(
-0,
-window.innerHeight-p.offsetHeight-10
-)+"px";
-
-}
-
-else{
-
-addLine(
-"Use left, right, top, or bottom.",
-"error"
-);
-
-return;
-}
-
-save();
-
-addLine("Snapped "+side+".","success");
-
-return;
-}
-
-if(c==="/hide"){
-
-hidePanel();
-
-return;
-}
-
-if(c==="/show"){
-
-showPanel();
-
-return;
-}
-
-if(c==="/toggle"){
-
-togglePanel();
-
-return;
-}
-
-if(c==="/compact"){
-
-compactMode=!compactMode;
-
-applyCompact();
-
-addLine(
-"Compact mode "+
-(compactMode?"on":"off"),
-"success"
-);
-
-return;
-}
-
-if(c==="/toolbar"){
-
-if(nav.style.display==="none"){
-nav.style.display="flex";
-}else{
-nav.style.display="none";
-}
-
-addLine(
-"Toolbar "+
-(nav.style.display==="none"?"hidden":"visible"),
-"success"
-);
-
-return;
-}
-
-if(c==="/fullscreen"){
-
-full.click();
-
-return;
-}
-
-if(c==="/minimize"){
-
-togglePanel();
-
-return;
-}
-
-if(c==="/special"){
-
-if(urlMatches(destinationUrl)){
-
-createSpecialPanel();
-
-addLine(
-"Special list opened.",
-"success"
-);
-
-}else{
-
-addLine(
-"Special list is unavailable on this URL.",
-"error"
-);
-
-}
-
-return;
-}
-
-if(c==="/special-close"){
-
-closeSpecialPanel();
-
-addLine(
-"Special list closed.",
-"success"
-);
-
-return;
-}
-
-if(c==="/console"){
-
-addLine("Console already open.");
-
-return;
-}
-
-if(c==="/clear"){
-
-devConsole.querySelector(".ciphConsoleOutput").innerHTML="";
-
-return;
-}
-
-if(c==="/bind"){
-
-const k=(a.shift()||"").toLowerCase();
-
-const act=(a.shift()||"").toLowerCase();
-
-if(!k||![
-"panel",
-"console",
-"minimize",
-"fullscreen",
-"reload",
-"hide",
-"show"
-].includes(act)){
-
-addLine(
-"Usage: /bind ctrl+shift+p console",
-"error"
-);
-
-return;
-}
-
-binds[k]=act;
-
-save();
-
-addLine("Binding saved.","success");
-
-return;
-}
-
-if(c==="/unbind"){
-
-const k=(a[0]||"").toLowerCase();
-
-delete binds[k];
-
-save();
-
-addLine("Binding removed.","success");
-
-return;
-}
-
-if(c==="/binds"){
-
-Object.keys(binds).forEach(k=>{
-addLine(k+" → "+binds[k]);
-});
-
-return;
-}
-
-if(c==="/reset"){
-
-try{
-localStorage.removeItem(KEY);
-}catch(e){}
-
-addLine(
-"Saved settings reset. Reopen bookmarklet.",
-"success"
-);
-
-return;
-}
-
-addLine(
-"Unknown command. Type /help.",
-"error"
-);
-}
+/* =========================================================
+   DEVELOPER CONSOLE
+   ========================================================= */
 
 function createConsole(){
 
-if(devConsole){
+    if(devConsole){
 
-commandInput.focus();
+        commandInput.focus();
 
-return;
+        return;
+    }
+
+
+    devConsole=
+        document.createElement("div");
+
+    devConsole.id=
+        CONSOLE;
+
+
+    devConsole.style.cssText=
+        "position:absolute;"+
+        "left:10px;"+
+        "right:10px;"+
+        "bottom:10px;"+
+        "height:285px;"+
+        "z-index:20;"+
+        "border:1px solid #ff6a00;"+
+        "border-radius:10px;"+
+        "background:#f7f7f7;"+
+        "box-shadow:0 12px 35px rgba(0,0,0,.3);"+
+        "display:flex;"+
+        "flex-direction:column;"+
+        "overflow:hidden";
+
+
+    const head=
+        document.createElement("div");
+
+
+    head.style.cssText=
+        "height:32px;"+
+        "flex:none;"+
+        "background:#181818;"+
+        "color:#fff;"+
+        "display:flex;"+
+        "align-items:center;"+
+        "justify-content:space-between;"+
+        "padding:0 9px;"+
+        "font:12px Arial;"+
+        "font-weight:700";
+
+
+    const ht=
+        document.createElement("span");
+
+    ht.textContent=
+        "CiphAnon Dev Console";
+
+
+    const hc=
+        document.createElement("button");
+
+    hc.textContent="×";
+
+    hc.style.cssText=
+        "border:0;"+
+        "background:none;"+
+        "color:#fff;"+
+        "font-size:18px;"+
+        "cursor:pointer";
+
+
+    hc.onclick=()=>{
+
+        devConsole.remove();
+
+        devConsole=null;
+
+        commandInput=null;
+
+        commandMenu=null;
+    };
+
+
+    head.append(ht,hc);
+
+
+    const output=
+        document.createElement("div");
+
+    output.className=
+        "ciphConsoleOutput";
+
+
+    output.style.cssText=
+        "flex:1;"+
+        "overflow:auto;"+
+        "padding:8px";
+
+
+    const row=
+        document.createElement("div");
+
+
+    row.style.cssText=
+        "position:relative;"+
+        "display:flex;"+
+        "gap:6px;"+
+        "padding:7px;"+
+        "border-top:1px solid #ddd";
+
+
+    const prompt=
+        document.createElement("span");
+
+
+    prompt.textContent=">";
+
+    prompt.style.cssText=
+        "padding-top:7px;"+
+        "color:#ff6a00;"+
+        "font-weight:700";
+
+
+    commandInput=
+        document.createElement("input");
+
+
+    commandInput.type="text";
+
+    commandInput.placeholder=
+        "Type / for commands...";
+
+    commandInput.autocomplete="off";
+
+    commandInput.spellcheck=false;
+
+
+    commandInput.style.cssText=
+        "flex:1;"+
+        "height:30px;"+
+        "border:1px solid #ddd;"+
+        "border-radius:6px;"+
+        "padding:0 9px;"+
+        "font:12px monospace;"+
+        "outline:none";
+
+
+    commandMenu=
+        document.createElement("div");
+
+
+    commandMenu.style.cssText=
+        "display:none;"+
+        "position:absolute;"+
+        "left:7px;"+
+        "right:7px;"+
+        "bottom:45px;"+
+        "max-height:180px;"+
+        "overflow:auto;"+
+        "border:1px solid #ddd;"+
+        "border-radius:7px;"+
+        "z-index:30;"+
+        "box-shadow:0 8px 25px rgba(0,0,0,.2)";
+
+
+    row.append(
+        prompt,
+        commandInput,
+        commandMenu
+    );
+
+
+    devConsole.append(
+        head,
+        output,
+        row
+    );
+
+
+    body.appendChild(
+        devConsole
+    );
+
+
+    applyConsoleTheme();
+
+
+    addLine(
+        "CiphAnon Dev Console ready.",
+        "success"
+    );
+
+    addLine(
+        "Type /help for commands."
+    );
+
+    addLine(
+        "Destination: "+
+        destinationUrl
+    );
+
+
+    commandInput.focus();
+
+
+    commandInput.oninput=()=>{
+        updateMenu(
+            commandInput.value
+        );
+    };
+
+
+    commandInput.onkeydown=e=>{
+
+        if(e.key==="Escape"){
+
+            devConsole.remove();
+
+            devConsole=null;
+
+            commandInput=null;
+
+            commandMenu=null;
+
+            return;
+        }
+
+
+        if(e.key==="Tab"){
+
+            const first=
+                commandMenu.querySelector(
+                    "button"
+                );
+
+
+            if(first){
+
+                e.preventDefault();
+
+                commandInput.value=
+                    first.textContent
+                        .split("  ")[0]+
+                    " ";
+
+                updateMenu(
+                    commandInput.value
+                );
+            }
+
+            return;
+        }
+
+
+        if(e.key==="Enter"){
+
+            const v=
+                commandInput.value.trim();
+
+
+            if(v){
+
+                addLine(
+                    "> "+v,
+                    "command"
+                );
+
+                runCommand(v);
+            }
+
+
+            commandInput.value="";
+
+            commandMenu.style.display=
+                "none";
+        }
+    };
 }
 
-devConsole=document.createElement("div");
 
-devConsole.id=CONSOLE;
+/* =========================================================
+   DRAGGING MAIN PANEL
+   ========================================================= */
 
-devConsole.style.cssText="position:absolute;left:10px;right:10px;bottom:10px;height:285px;z-index:20;border:1px solid #ff6a00;border-radius:10px;background:#f7f7f7;box-shadow:0 12px 35px rgba(0,0,0,.3);display:flex;flex-direction:column;overflow:hidden";
+bar.addEventListener(
+    "mousedown",
+    e=>{
 
-const head=document.createElement("div");
+        if(e.target.closest("button")){
+            return;
+        }
 
-head.style.cssText="height:32px;flex:none;background:#181818;color:#fff;display:flex;align-items:center;justify-content:space-between;padding:0 9px;font:12px Arial;font-weight:700";
 
-const ht=document.createElement("span");
+        drag=true;
 
-ht.textContent="CiphAnon Dev Console";
 
-const hc=document.createElement("button");
+        dx=
+            e.clientX-
+            p.offsetLeft;
 
-hc.textContent="×";
+        dy=
+            e.clientY-
+            p.offsetTop;
 
-hc.style.cssText="border:0;background:none;color:#fff;font-size:18px;cursor:pointer";
 
-hc.onclick=()=>{
-devConsole.remove();
-devConsole=null;
-commandInput=null;
-commandMenu=null;
-};
-
-head.append(ht,hc);
-
-const output=document.createElement("div");
-
-output.className="ciphConsoleOutput";
-
-output.style.cssText="flex:1;overflow:auto;padding:8px";
-
-const row=document.createElement("div");
-
-row.style.cssText="position:relative;display:flex;gap:6px;padding:7px;border-top:1px solid #ddd";
-
-const prompt=document.createElement("span");
-
-prompt.textContent=">";
-
-prompt.style.cssText="padding-top:7px;color:#ff6a00;font-weight:700";
-
-commandInput=document.createElement("input");
-
-commandInput.type="text";
-commandInput.placeholder="Type / for commands...";
-commandInput.autocomplete="off";
-commandInput.spellcheck=false;
-
-commandInput.style.cssText="flex:1;height:30px;border:1px solid #ddd;border-radius:6px;padding:0 9px;font:12px monospace;outline:none";
-
-commandMenu=document.createElement("div");
-
-commandMenu.style.cssText="display:none;position:absolute;left:7px;right:7px;bottom:45px;max-height:180px;overflow:auto;border:1px solid #ddd;border-radius:7px;z-index:30;box-shadow:0 8px 25px rgba(0,0,0,.2)";
-
-row.append(prompt,commandInput,commandMenu);
-
-devConsole.append(head,output,row);
-
-body.appendChild(devConsole);
-
-applyConsoleTheme();
-
-addLine(
-"CiphAnon Dev Console ready.",
-"success"
+        frame.style.pointerEvents=
+            "none";
+    }
 );
 
-addLine("Type /help for commands.");
 
-addLine("Destination: "+destinationUrl);
+document.addEventListener(
+    "mousemove",
+    e=>{
 
-commandInput.focus();
+        if(drag){
 
-commandInput.oninput=()=>{
-updateMenu(commandInput.value);
-};
+            p.style.left=
+                clamp(
+                    e.clientX-dx,
+                    0,
+                    Math.max(
+                        0,
+                        window.innerWidth-
+                        p.offsetWidth
+                    )
+                )+"px";
 
-commandInput.onkeydown=e=>{
 
-if(e.key==="Escape"){
+            p.style.top=
+                clamp(
+                    e.clientY-dy,
+                    0,
+                    Math.max(
+                        0,
+                        window.innerHeight-
+                        p.offsetHeight
+                    )
+                )+"px";
+        }
 
-devConsole.remove();
 
-devConsole=null;
-commandInput=null;
-commandMenu=null;
+        if(resizing){
 
-return;
-}
+            p.style.width=
+                clamp(
+                    rw+
+                    e.clientX-
+                    rx,
+                    350,
+                    window.innerWidth
+                )+"px";
 
-if(e.key==="Tab"){
 
-const first=commandMenu.querySelector("button");
-
-if(first){
-
-e.preventDefault();
-
-commandInput.value=
-first.textContent.split("  ")[0]+" ";
-
-}
-
-return;
-}
-
-if(e.key==="Enter"){
-
-const v=commandInput.value.trim();
-
-if(v){
-
-addLine(
-"> "+v,
-"command"
+            p.style.height=
+                clamp(
+                    rh+
+                    e.clientY-
+                    ry,
+                    220,
+                    window.innerHeight
+                )+"px";
+        }
+    }
 );
 
-runCommand(v);
 
-}
+document.addEventListener(
+    "mouseup",
+    ()=>{
 
-commandInput.value="";
+        if(
+            drag||
+            resizing
+        ){
+            save();
+        }
 
-commandMenu.style.display="none";
 
-}
+        drag=false;
 
-};
-}
+        resizing=false;
 
-bar.addEventListener("mousedown",e=>{
+        frame.style.pointerEvents=
+            "auto";
+    }
+);
 
-if(e.target.closest("button"))return;
 
-drag=true;
+/* =========================================================
+   RESIZING
+   ========================================================= */
 
-dx=e.clientX-p.offsetLeft;
-dy=e.clientY-p.offsetTop;
+resize.addEventListener(
+    "mousedown",
+    e=>{
 
-frame.style.pointerEvents="none";
+        resizing=true;
 
-});
+        rw=p.offsetWidth;
+        rh=p.offsetHeight;
 
-document.addEventListener("mousemove",e=>{
+        rx=e.clientX;
+        ry=e.clientY;
 
-if(drag){
+        frame.style.pointerEvents=
+            "none";
 
-p.style.left=clamp(
-e.clientX-dx,
-0,
-Math.max(0,window.innerWidth-p.offsetWidth)
-)+"px";
+        e.preventDefault();
+    }
+);
 
-p.style.top=clamp(
-e.clientY-dy,
-0,
-Math.max(0,window.innerHeight-p.offsetHeight)
-)+"px";
 
-}
-
-if(resizing){
-
-p.style.width=clamp(
-rw+e.clientX-rx,
-350,
-window.innerWidth
-)+"px";
-
-p.style.height=clamp(
-rh+e.clientY-ry,
-220,
-window.innerHeight
-)+"px";
-
-}
-
-});
-
-document.addEventListener("mouseup",()=>{
-
-if(drag||resizing)save();
-
-drag=false;
-resizing=false;
-
-frame.style.pointerEvents="auto";
-
-});
-
-resize.addEventListener("mousedown",e=>{
-
-resizing=true;
-
-rw=p.offsetWidth;
-rh=p.offsetHeight;
-
-rx=e.clientX;
-ry=e.clientY;
-
-frame.style.pointerEvents="none";
-
-e.preventDefault();
-
-});
+/* =========================================================
+   BUTTON ACTIONS
+   ========================================================= */
 
 back.onclick=()=>{
-try{
-frame.contentWindow.history.back();
-}catch(e){}
+
+    try{
+        frame.contentWindow.history.back();
+    }catch(e){}
 };
+
 
 forward.onclick=()=>{
-try{
-frame.contentWindow.history.forward();
-}catch(e){}
+
+    try{
+        frame.contentWindow.history.forward();
+    }catch(e){}
 };
 
-reload.onclick=reloadPage;
+
+reload.onclick=
+    reloadPage;
+
 
 theme.onclick=()=>{
 
-dark=!dark;
+    dark=!dark;
 
-applyTheme();
+    applyTheme();
 
-toast(
-dark?"Dark mode":"Light mode"
-);
-
+    toast(
+        dark
+            ?"Dark mode"
+            :"Light mode"
+    );
 };
+
 
 opacity.onclick=()=>{
 
-const vals=["1",".9",".8",".7",".6"];
+    const vals=[
+        "1",
+        ".9",
+        ".8",
+        ".7",
+        ".6"
+    ];
 
-let i=vals.indexOf(p.style.opacity);
 
-p.style.opacity=vals[(i+1)%vals.length];
+    let i=
+        vals.indexOf(
+            p.style.opacity
+        );
 
-save();
 
-toast(
-"Opacity "+
-Math.round(parseFloat(p.style.opacity)*100)+
-"%"
-);
+    if(i<0)i=0;
 
+
+    p.style.opacity=
+        vals[
+            (i+1)%vals.length
+        ];
+
+
+    save();
+
+
+    toast(
+        "Opacity "+
+        Math.round(
+            parseFloat(
+                p.style.opacity
+            )*100
+        )+
+        "%"
+    );
 };
+
 
 compact.onclick=()=>{
 
-compactMode=!compactMode;
+    compactMode=
+        !compactMode;
 
-applyCompact();
+    applyCompact();
 
-toast(
-compactMode?
-"Compact toolbar":
-"Full toolbar"
-);
 
+    toast(
+        compactMode
+            ?"Compact toolbar"
+            :"Full toolbar"
+    );
 };
 
-miniBtn.onclick=togglePanel;
 
-consoleBtn.onclick=createConsole;
+miniBtn.onclick=
+    hidePanel;
+
+
+consoleBtn.onclick=
+    createConsole;
+
 
 specialBtn.onclick=()=>{
 
-if(urlMatches(destinationUrl)){
-createSpecialPanel();
-}else{
-toast(
-"Special list unavailable here",
-"error"
-);
-}
+    if(
+        urlMatches(
+            destinationUrl
+        )
+    ){
 
+        createSpecialPanel();
+
+    }else{
+
+        toast(
+            "Special list unavailable here",
+            "error"
+        );
+    }
 };
+
+
+/* =========================================================
+   FULLSCREEN
+   ========================================================= */
 
 full.onclick=()=>{
 
-if(!fs){
+    if(!fs){
 
-p.dataset.prev=JSON.stringify({
-l:p.style.left,
-t:p.style.top,
-w:p.style.width,
-h:p.style.height,
-r:p.style.borderRadius
-});
+        p.dataset.prev=
+            JSON.stringify({
 
-p.style.left="0";
-p.style.top="0";
-p.style.width="100vw";
-p.style.height="100vh";
-p.style.borderRadius="0";
+                l:p.style.left,
+                t:p.style.top,
 
-fs=true;
+                w:p.style.width,
+                h:p.style.height,
 
-toast("Fullscreen");
+                r:p.style.borderRadius
+            });
 
-}else{
 
-let q={};
+        p.style.left="0";
+        p.style.top="0";
 
-try{
-q=JSON.parse(p.dataset.prev||"{}");
-}catch(e){}
+        p.style.width="100vw";
+        p.style.height="100vh";
 
-p.style.left=q.l||"80px";
-p.style.top=q.t||"80px";
-p.style.width=q.w||"820px";
-p.style.height=q.h||"520px";
-p.style.borderRadius=q.r||"14px";
+        p.style.borderRadius="0";
 
-fs=false;
 
-toast("Windowed");
+        fs=true;
 
-}
 
-save();
+        toast("Fullscreen");
 
+    }else{
+
+        let q={};
+
+
+        try{
+
+            q=
+                JSON.parse(
+                    p.dataset.prev||
+                    "{}"
+                );
+
+        }catch(e){}
+
+
+        p.style.left=
+            q.l||
+            "80px";
+
+        p.style.top=
+            q.t||
+            "80px";
+
+        p.style.width=
+            q.w||
+            "820px";
+
+        p.style.height=
+            q.h||
+            "520px";
+
+        p.style.borderRadius=
+            q.r||
+            "14px";
+
+
+        fs=false;
+
+
+        toast("Windowed");
+    }
+
+
+    save();
 };
+
+
+/* =========================================================
+   CLOSE
+   ========================================================= */
 
 close.onclick=()=>{
 
-if(hideTimer)clearTimeout(hideTimer);
+    if(hideTimer){
+        clearTimeout(hideTimer);
+    }
 
-save();
 
-if(devConsole)devConsole.remove();
+    save();
 
-closeSpecialPanel();
 
-const m=document.getElementById(MIN);
+    if(devConsole){
+        devConsole.remove();
+    }
 
-if(m)m.remove();
 
-const t=document.getElementById(TOAST);
+    closeSpecialPanel();
 
-if(t)t.remove();
 
-if(currentTip)currentTip.remove();
+    const m=
+        document.getElementById(MIN);
 
-p.remove();
+    if(m)m.remove();
 
+
+    const t=
+        document.getElementById(TOAST);
+
+    if(t)t.remove();
+
+
+    if(currentTip){
+        currentTip.remove();
+    }
+
+
+    p.remove();
+
+
+    const s=
+        document.getElementById(STYLE);
+
+    if(s)s.remove();
 };
 
-frame.addEventListener("load",()=>{
 
-let detected=destinationUrl;
+/* =========================================================
+   IFRAME URL DETECTION
+   ========================================================= */
 
-try{
+frame.addEventListener(
+    "load",
+    ()=>{
 
-if(frame.contentWindow&&frame.contentWindow.location.href){
-detected=frame.contentWindow.location.href;
-}
+        let detected=
+            destinationUrl;
 
-}catch(e){
 
-detected=destinationUrl;
+        try{
 
-}
+            if(
+                frame.contentWindow&&
+                frame.contentWindow.location.href
+            ){
 
-updateSpecialButton(detected);
+                detected=
+                    frame.contentWindow
+                        .location
+                        .href;
+            }
 
-});
+        }catch(e){
 
-document.addEventListener("keydown",e=>{
+            /*
+             Cross-origin pages cannot expose
+             their current URL to the bookmarklet.
+             In that case we use destinationUrl.
+            */
 
-const target=e.target;
+            detected=
+                destinationUrl;
+        }
 
-if(
-target.tagName==="INPUT"||
-target.tagName==="TEXTAREA"||
-target.isContentEditable
-)return;
 
-const key=normalizeKey(e);
+        updateSpecialButton(
+            detected
+        );
+    }
+);
 
-const act=binds[key];
 
-if(act){
+/* =========================================================
+   KEYBOARD SHORTCUTS
+   ========================================================= */
 
-e.preventDefault();
+document.addEventListener(
+    "keydown",
+    e=>{
 
-runAction(act);
+        const target=e.target;
 
-return;
-}
 
-const k=e.key.toLowerCase();
+        if(
+            target.tagName==="INPUT"||
+            target.tagName==="TEXTAREA"||
+            target.isContentEditable
+        ){
 
-if(k==="p"){
+            return;
+        }
 
-e.preventDefault();
 
-togglePanel();
+        const key=
+            normalizeKey(e);
 
-return;
-}
 
-if(k==="m"){
+        const act=
+            binds[key];
 
-e.preventDefault();
 
-togglePanel();
+        if(act){
 
-return;
-}
+            e.preventDefault();
 
-if(k==="f"){
+            runAction(act);
 
-e.preventDefault();
+            return;
+        }
 
-full.click();
 
-return;
-}
+        const k=
+            e.key.toLowerCase();
 
-if(k==="r"){
 
-e.preventDefault();
+        /* P = show/hide */
 
-reloadPage();
+        if(k==="p"){
 
-return;
-}
+            e.preventDefault();
 
-if(k==="/"){
+            togglePanel();
 
-e.preventDefault();
+            return;
+        }
 
-createConsole();
 
-return;
-}
+        /* M = minimize/hide */
 
-if(k==="escape"){
+        if(k==="m"){
 
-e.preventDefault();
+            e.preventDefault();
 
-if(specialPanel){
+            hidePanel();
 
-closeSpecialPanel();
+            return;
+        }
 
-return;
-}
 
-if(devConsole){
+        /* F = fullscreen */
 
-devConsole.remove();
+        if(k==="f"){
 
-devConsole=null;
-commandInput=null;
-commandMenu=null;
+            e.preventDefault();
 
-return;
-}
+            full.click();
 
-hidePanel();
+            return;
+        }
 
-}
 
-});
+        /* R = reload */
 
-window.addEventListener("resize",()=>{
+        if(k==="r"){
 
-if(fs)return;
+            e.preventDefault();
 
-p.style.left=clamp(
-parseInt(p.style.left)||0,
-0,
-Math.max(0,window.innerWidth-p.offsetWidth)
-)+"px";
+            reloadPage();
 
-p.style.top=clamp(
-parseInt(p.style.top)||0,
-0,
-Math.max(0,window.innerHeight-p.offsetHeight)
-)+"px";
+            return;
+        }
 
-if(specialPanel){
 
-const r=specialPanel.getBoundingClientRect();
+        /* / = console */
 
-specialPanel.style.left=clamp(
-r.left,
-0,
-Math.max(0,window.innerWidth-r.width)
-)+"px";
+        if(k==="/"){
 
-specialPanel.style.top=clamp(
-r.top,
-0,
-Math.max(0,window.innerHeight-r.height)
-)+"px";
+            e.preventDefault();
 
-specialPanel.style.transform="none";
+            createConsole();
 
-}
+            return;
+        }
 
-});
+
+        /* ESC */
+
+        if(k==="escape"){
+
+            e.preventDefault();
+
+
+            if(specialPanel){
+
+                closeSpecialPanel();
+
+                return;
+            }
+
+
+            if(devConsole){
+
+                devConsole.remove();
+
+                devConsole=null;
+
+                commandInput=null;
+
+                commandMenu=null;
+
+                return;
+            }
+
+
+            hidePanel();
+        }
+    }
+);
+
+
+/* =========================================================
+   WINDOW RESIZE
+   ========================================================= */
+
+window.addEventListener(
+    "resize",
+    ()=>{
+
+        if(!fs){
+
+            p.style.left=
+                clamp(
+                    parseInt(
+                        p.style.left
+                    )||0,
+                    0,
+                    Math.max(
+                        0,
+                        window.innerWidth-
+                        p.offsetWidth
+                    )
+                )+"px";
+
+
+            p.style.top=
+                clamp(
+                    parseInt(
+                        p.style.top
+                    )||0,
+                    0,
+                    Math.max(
+                        0,
+                        window.innerHeight-
+                        p.offsetHeight
+                    )
+                )+"px";
+        }
+
+
+        if(specialPanel){
+
+            const r=
+                specialPanel
+                    .getBoundingClientRect();
+
+
+            specialPanel.style.left=
+                clamp(
+                    r.left,
+                    0,
+                    Math.max(
+                        0,
+                        window.innerWidth-
+                        r.width
+                    )
+                )+"px";
+
+
+            specialPanel.style.top=
+                clamp(
+                    r.top,
+                    0,
+                    Math.max(
+                        0,
+                        window.innerHeight-
+                        r.height
+                    )
+                )+"px";
+
+
+            specialPanel.style.transform=
+                "none";
+        }
+    }
+);
+
+
+/* =========================================================
+   START
+   ========================================================= */
 
 applyTheme();
 
 applyCompact();
 
-frame.dataset.destination=destinationUrl;
 
-urlInput.value=destinationUrl;
+frame.dataset.destination=
+    destinationUrl;
 
-frame.src=destinationUrl;
 
-updateSpecialButton(destinationUrl);
+urlInput.value=
+    destinationUrl;
+
+
+frame.src=
+    destinationUrl;
+
+
+updateSpecialButton(
+    destinationUrl
+);
+
 
 startLoading();
 
+
 save();
+
+
+/* =========================================================
+   DONE
+   ========================================================= */
+
+toast(
+    "CiphAnon Panel loaded",
+    "success"
+);
 
 })();
 void 0
