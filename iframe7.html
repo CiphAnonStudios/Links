@@ -1,32 +1,29 @@
 javascript:(()=>{
 
-const ID="ciphAnonPanel",
-MIN="ciphAnonMini",
-KEY="ciphAnonPanelSettings",
-CONSOLE="ciphAnonDevConsole",
-STYLE="ciphAnonStyle",
-TOAST="ciphAnonToast",
-SPECIAL="ciphAnonSpecial",
+/* ==============================
+   CIPHANON STUDIOS PANEL
+   ============================== */
 
-DEFAULT_DESTINATION="https://ciphanonstudios.github.io/Eaglercraft-1.8-v2/",
-DEFAULT_MIN_DELAY=3000,
-DEFAULT_MAX_DELAY=10000;
+const ID="ciphAnonPanel";
+const MINI="ciphAnonMini";
+const STYLE="ciphAnonStyle";
+const SPECIAL="ciphAnonSpecial";
+const CONSOLE="ciphAnonDevConsole";
+const TOAST="ciphAnonToast";
 
+const DEFAULT_DESTINATION=
+"https://ciphanonstudios.github.io/Eaglercraft-1.8-v2/";
 
-/* =========================================================
+/* ==============================
    SPECIAL PAGE SETTINGS
-   CHANGE ONLY THIS SECTION
-   ========================================================= */
+   ============================== */
 
 const SPECIAL_PAGE={
-    url:"https://ciphanonstudios.github.io/Eaglercraft-1.8-v2/",
+    url:DEFAULT_DESTINATION,
     match:"exact",
-
     buttonText:"☰",
     buttonTip:"Open Special List",
-
     panelTitle:"My List",
-
     items:[
         "Add your first item here",
         "Add your second item here",
@@ -34,3807 +31,1276 @@ const SPECIAL_PAGE={
     ]
 };
 
+/* ==============================
+   CLEAN OLD VERSION
+   ============================== */
 
-/* =========================================================
-   REMOVE OLD VERSION
-   ========================================================= */
-
-const oldPanel=document.getElementById(ID);
-if(oldPanel)oldPanel.remove();
-
-const oldMini=document.getElementById(MIN);
-if(oldMini)oldMini.remove();
-
-const oldStyle=document.getElementById(STYLE);
-if(oldStyle)oldStyle.remove();
-
-const oldConsole=document.getElementById(CONSOLE);
-if(oldConsole)oldConsole.remove();
-
-const oldSpecial=document.getElementById(SPECIAL);
-if(oldSpecial)oldSpecial.remove();
-
-const oldToast=document.getElementById(TOAST);
-if(oldToast)oldToast.remove();
-
-
-/* =========================================================
-   SAVED SETTINGS
-   ========================================================= */
-
-let saved={};
-
-try{
-    saved=JSON.parse(localStorage.getItem(KEY)||"{}");
-}catch(e){
-    saved={};
+if(typeof window.__CIPHANON_CLEANUP==="function"){
+    try{
+        window.__CIPHANON_CLEANUP();
+    }catch(e){}
 }
 
+const cleanup=[];
 
-/* =========================================================
+window.__CIPHANON_CLEANUP=()=>{
+    cleanup.forEach(fn=>{
+        try{fn()}catch(e){}
+    });
+
+    [
+        ID,
+        MINI,
+        STYLE,
+        SPECIAL,
+        CONSOLE,
+        TOAST
+    ].forEach(id=>{
+        const el=document.getElementById(id);
+        if(el) el.remove();
+    });
+};
+
+/* ==============================
    HELPERS
-   ========================================================= */
+   ============================== */
 
-const clamp=(n,a,b)=>{
-    return Math.max(a,Math.min(b,n));
-};
+function listen(el,event,fn,options){
+    el.addEventListener(event,fn,options);
+    cleanup.push(()=>{
+        el.removeEventListener(event,fn,options);
+    });
+}
 
-const valid=u=>{
-    try{
-        new URL(u,location.href);
-        return true;
-    }catch(e){
-        return false;
+function $(id){
+    return document.getElementById(id);
+}
+
+function toast(text){
+    let t=$(TOAST);
+
+    if(!t){
+        t=document.createElement("div");
+        t.id=TOAST;
+
+        Object.assign(t.style,{
+            position:"fixed",
+            left:"50%",
+            bottom:"25px",
+            transform:"translateX(-50%)",
+            padding:"10px 16px",
+            background:"#111",
+            color:"#fff",
+            border:"1px solid #ff6a00",
+            borderRadius:"10px",
+            fontFamily:"Arial,sans-serif",
+            fontSize:"13px",
+            zIndex:"2147483647",
+            boxShadow:"0 5px 25px #0008",
+            pointerEvents:"none",
+            opacity:"0",
+            transition:"opacity .2s"
+        });
+
+        document.body.appendChild(t);
     }
-};
 
-function normalizeUrl(u){
+    t.textContent=text;
+    t.style.opacity="1";
+
+    clearTimeout(t._timer);
+
+    t._timer=setTimeout(()=>{
+        t.style.opacity="0";
+    },1600);
+}
+
+function normalizeUrl(url){
     try{
-        const x=new URL(u,location.href);
-
-        x.hash="";
-
-        let result=x.href;
-
-        if(result.endsWith("/")){
-            result=result.slice(0,-1);
-        }
-
-        return result.toLowerCase();
-
+        const u=new URL(url,location.href);
+        u.hash="";
+        return u.href.replace(/\/$/,"");
     }catch(e){
-        return String(u)
-            .trim()
-            .replace(/\/$/,"")
-            .toLowerCase();
+        return String(url).replace(/\/$/,"");
     }
 }
 
-function urlMatches(u){
+function isSpecialPage(url){
+    if(!url) return false;
 
-    const current=normalizeUrl(u);
+    const current=normalizeUrl(url);
     const target=normalizeUrl(SPECIAL_PAGE.url);
 
     if(SPECIAL_PAGE.match==="startsWith"){
-        return current.startsWith(target);
+        return current.indexOf(target)===0;
+    }
+
+    if(SPECIAL_PAGE.match==="contains"){
+        return current.indexOf(target)!==-1;
     }
 
     return current===target;
 }
 
+/* ==============================
+   CSS
+   ============================== */
 
-/* =========================================================
-   STYLE
-   ========================================================= */
+const css=`
 
-const style=document.createElement("style");
-
-style.id=STYLE;
-
-style.textContent=`
+#${ID}{
+    position:fixed;
+    left:50%;
+    top:50%;
+    transform:translate(-50%,-50%);
+    width:900px;
+    height:600px;
+    min-width:350px;
+    min-height:250px;
+    background:#111;
+    color:#fff;
+    border:1px solid #ff6a00;
+    border-radius:14px;
+    box-shadow:0 20px 70px #000b;
+    overflow:hidden;
+    z-index:2147483000;
+    font-family:Arial,sans-serif;
+    resize:both;
+}
 
 #${ID} *{
     box-sizing:border-box;
 }
 
-#${ID} button{
-    font-family:Arial,sans-serif;
+#${ID} .capTop{
+    height:48px;
+    display:flex;
+    align-items:center;
+    gap:6px;
+    padding:6px 8px;
+    background:#181818;
+    border-bottom:1px solid #333;
+    cursor:move;
+    user-select:none;
 }
 
-#${ID} .capBtn{
-    transition:.15s;
-}
-
-#${ID} .capBtn:hover{
-    background:#ff6a00!important;
-    transform:translateY(-1px);
-}
-
-#${ID} .capAction{
-    transition:.15s;
-}
-
-#${ID} .capAction:hover{
-    border-color:#ff6a00!important;
-    transform:translateY(-1px);
-}
-
-#${ID} input:focus{
-    border-color:#ff6a00!important;
-    box-shadow:0 0 0 2px rgba(255,106,0,.12);
-}
-
-.capTip{
-    position:fixed;
-    pointer-events:none;
-    background:#111;
-    color:#fff;
-    padding:6px 9px;
-    border-radius:6px;
-    font:11px Arial;
+#${ID} .capTitle{
+    font-weight:bold;
+    color:#ff6a00;
+    margin-right:5px;
     white-space:nowrap;
-    opacity:0;
-    transform:translateY(3px);
-    transition:.15s;
-    z-index:2147483647;
-    box-shadow:0 5px 18px rgba(0,0,0,.3);
+}
+
+#${ID} .capButtons{
+    display:flex;
+    align-items:center;
+    gap:5px;
+    flex:1;
+}
+
+#${ID} button{
+    border:1px solid #333;
+    background:#222;
+    color:#fff;
+    border-radius:7px;
+    height:32px;
+    min-width:32px;
+    cursor:pointer;
+    font-size:14px;
+}
+
+#${ID} button:hover{
+    background:#ff6a00;
+    border-color:#ff6a00;
+    color:#fff;
+}
+
+#${ID} .danger:hover{
+    background:#d33;
+    border-color:#d33;
+}
+
+#${ID} .capUrl{
+    height:42px;
+    display:flex;
+    gap:6px;
+    padding:6px;
+    background:#151515;
+    border-bottom:1px solid #333;
+}
+
+#${ID} .capUrl input{
+    flex:1;
+    min-width:0;
+    background:#0c0c0c;
+    color:#fff;
+    border:1px solid #333;
+    border-radius:7px;
+    padding:0 10px;
+    outline:none;
+}
+
+#${ID} .capUrl input:focus{
+    border-color:#ff6a00;
+}
+
+#${ID} .capBody{
+    position:absolute;
+    left:0;
+    right:0;
+    top:90px;
+    bottom:0;
+    background:#000;
+}
+
+#${ID} iframe{
+    width:100%;
+    height:100%;
+    border:0;
+    display:block;
+    background:#000;
+}
+
+#${ID} .loading{
+    position:absolute;
+    inset:0;
+    background:#111;
+    z-index:5;
+}
+
+#${ID} .loading iframe{
+    width:100%;
+    height:100%;
+    border:0;
+}
+
+#${ID} .loadingText{
+    position:absolute;
+    left:50%;
+    top:50%;
+    transform:translate(-50%,-50%);
+    background:#111d;
+    border:1px solid #ff6a00;
+    border-radius:10px;
+    padding:12px 18px;
+    color:#fff;
+    pointer-events:none;
+}
+
+#${MINI}{
+    position:fixed;
+    right:20px;
+    bottom:20px;
+    width:48px;
+    height:48px;
+    border-radius:50%;
+    border:1px solid #ff6a00;
+    background:#111;
+    color:#ff6a00;
+    z-index:2147483001;
+    cursor:pointer;
+    font-size:20px;
+    box-shadow:0 8px 30px #0008;
+}
+
+#${MINI}:hover{
+    background:#ff6a00;
+    color:#fff;
 }
 
 #${SPECIAL}{
     position:fixed;
-    width:360px;
-    max-width:calc(100vw - 30px);
-    height:390px;
-    max-height:calc(100vh - 30px);
-
     left:50%;
     top:50%;
-
     transform:translate(-50%,-50%);
-
-    background:#fff;
-
-    border:1px solid rgba(255,106,0,.7);
-    border-radius:13px;
-
-    z-index:2147483646;
-
-    box-shadow:0 20px 70px rgba(0,0,0,.4);
-
-    display:flex;
-    flex-direction:column;
-
+    width:360px;
+    max-width:calc(100vw - 30px);
+    max-height:calc(100vh - 30px);
+    background:#151515;
+    color:#fff;
+    border:1px solid #ff6a00;
+    border-radius:14px;
+    box-shadow:0 20px 70px #000c;
+    z-index:2147483100;
     overflow:hidden;
-
-    font-family:Inter,Arial,sans-serif;
+    display:none;
 }
 
 #${SPECIAL} .specialHead{
-    height:44px;
-    flex:none;
-
-    background:#181818;
-    color:#fff;
-
+    height:48px;
     display:flex;
     align-items:center;
-    justify-content:space-between;
-
     padding:0 10px;
-
+    background:#1d1d1d;
+    border-bottom:1px solid #333;
     cursor:move;
     user-select:none;
 }
 
 #${SPECIAL} .specialTitle{
-    font-size:13px;
-    font-weight:700;
-
-    display:flex;
-    align-items:center;
-    gap:8px;
-}
-
-#${SPECIAL} .specialDot{
-    width:8px;
-    height:8px;
-
-    border-radius:50%;
-
-    background:#ff6a00;
-
-    box-shadow:0 0 12px #ff6a00;
-}
-
-#${SPECIAL} .specialClose{
-    width:29px;
-    height:27px;
-
-    border:0;
-    border-radius:7px;
-
-    background:#292929;
-    color:#fff;
-
-    cursor:pointer;
-    font-size:17px;
-
-    transition:.15s;
-}
-
-#${SPECIAL} .specialClose:hover{
-    background:#ff6a00;
-}
-
-#${SPECIAL} .specialBody{
     flex:1;
+    font-weight:bold;
+    color:#ff6a00;
+}
 
-    overflow:auto;
-
+#${SPECIAL} .specialList{
     padding:12px;
-
-    background:#fff;
+    max-height:400px;
+    overflow:auto;
 }
 
 #${SPECIAL} .specialItem{
-    padding:11px 12px;
-
+    padding:11px;
     margin-bottom:8px;
-
-    border:1px solid #ddd;
+    background:#202020;
+    border:1px solid #333;
     border-radius:8px;
-
-    background:#fafafa;
-    color:#222;
-
-    font:12px Arial;
-    line-height:1.45;
-
-    word-break:break-word;
-
-    transition:.15s;
 }
 
 #${SPECIAL} .specialItem:hover{
     border-color:#ff6a00;
-
-    transform:translateX(2px);
-
-    box-shadow:0 3px 12px rgba(255,106,0,.1);
 }
 
-#${SPECIAL} .specialEmpty{
-    padding:20px;
-
-    text-align:center;
-
+#${SPECIAL} .specialFoot{
+    padding:9px 12px;
+    font-size:11px;
     color:#888;
-
-    font:12px Arial;
+    border-top:1px solid #333;
 }
 
-#${SPECIAL} .specialFooter{
-    height:36px;
-    flex:none;
+#${CONSOLE}{
+    position:fixed;
+    right:20px;
+    bottom:80px;
+    width:420px;
+    height:300px;
+    background:#080808;
+    color:#eee;
+    border:1px solid #ff6a00;
+    border-radius:12px;
+    z-index:2147483200;
+    display:none;
+    overflow:hidden;
+    box-shadow:0 20px 60px #000b;
+    font-family:monospace;
+}
 
-    border-top:1px solid #ddd;
-
+#${CONSOLE} .consoleHead{
+    height:40px;
     display:flex;
     align-items:center;
+    padding:0 8px;
+    background:#151515;
+    border-bottom:1px solid #333;
+}
 
+#${CONSOLE} .consoleTitle{
+    flex:1;
+    color:#ff6a00;
+    font-weight:bold;
+}
+
+#${CONSOLE} .consoleOut{
+    height:215px;
+    overflow:auto;
+    padding:10px;
+    white-space:pre-wrap;
+}
+
+#${CONSOLE} .consoleInput{
+    height:45px;
+    border-top:1px solid #333;
+    display:flex;
+}
+
+#${CONSOLE} input{
+    flex:1;
+    border:0;
+    outline:0;
+    background:#050505;
+    color:#fff;
     padding:0 10px;
-
-    font:10px Arial;
-    color:#888;
-}
-
-#${SPECIAL}.dark{
-    background:#161616;
-}
-
-#${SPECIAL}.dark .specialBody{
-    background:#161616;
-}
-
-#${SPECIAL}.dark .specialItem{
-    background:#202020;
-    border-color:#333;
-    color:#eee;
-}
-
-#${SPECIAL}.dark .specialFooter{
-    border-color:#333;
-    color:#888;
+    font-family:monospace;
 }
 
 `;
 
-
+const style=document.createElement("style");
+style.id=STYLE;
+style.textContent=css;
 document.head.appendChild(style);
 
-
-/* =========================================================
+/* ==============================
    MAIN PANEL
-   ========================================================= */
+   ============================== */
 
-const p=document.createElement("div");
-const bar=document.createElement("div");
-const title=document.createElement("div");
-const tools=document.createElement("div");
-const body=document.createElement("div");
-const nav=document.createElement("div");
-const urlInput=document.createElement("input");
-const frame=document.createElement("iframe");
-const overlay=document.createElement("iframe");
-const resize=document.createElement("div");
+const panel=document.createElement("div");
+panel.id=ID;
 
-p.id=ID;
+panel.innerHTML=`
 
-Object.assign(p.style,{
-    position:"fixed",
+<div class="capTop">
 
-    left:saved.left||"80px",
-    top:saved.top||"80px",
+    <div class="capTitle">
+        CiphAnon Studios
+    </div>
 
-    width:saved.width||"820px",
-    height:saved.height||"520px",
+    <div class="capButtons">
 
-    minWidth:"350px",
-    minHeight:"220px",
+        <button data-action="back" title="Back">←</button>
+        <button data-action="forward" title="Forward">→</button>
+        <button data-action="reload" title="Reload">↻</button>
 
-    maxWidth:"100vw",
-    maxHeight:"100vh",
+        <button data-action="theme" title="Theme">◐</button>
+        <button data-action="opacity" title="Opacity">◑</button>
+        <button data-action="compact" title="Compact">▣</button>
 
-    background:"#fff",
+        <button data-action="minimize" title="Minimize">−</button>
+        <button data-action="fullscreen" title="Fullscreen">□</button>
+        <button data-action="console" title="Developer Console">⌘</button>
 
-    border:"1px solid rgba(255,106,0,.65)",
+        <button
+            id="ciphAnonSpecialBtn"
+            title="${SPECIAL_PAGE.buttonTip}"
+            style="display:none"
+        >${SPECIAL_PAGE.buttonText}</button>
 
-    borderRadius:saved.radius||"14px",
+        <button
+            class="danger"
+            data-action="close"
+            title="Close"
+        >×</button>
 
-    zIndex:"2147483647",
-
-    display:"flex",
-
-    flexDirection:"column",
-
-    overflow:"hidden",
-
-    boxShadow:"0 20px 70px rgba(0,0,0,.38)",
-
-    fontFamily:"Inter,Arial,sans-serif",
-
-    opacity:saved.opacity||"1"
-});
-
-
-/* =========================================================
-   HEADER
-   ========================================================= */
-
-bar.style.cssText=
-"height:44px;"+
-"flex:none;"+
-"background:#181818;"+
-"color:#fff;"+
-"display:flex;"+
-"align-items:center;"+
-"justify-content:space-between;"+
-"padding:0 9px;"+
-"cursor:move;"+
-"user-select:none";
-
-
-title.style.cssText=
-"display:flex;"+
-"align-items:center;"+
-"gap:8px;"+
-"font-size:13px;"+
-"font-weight:700";
-
-
-title.innerHTML=
-'<span style="width:9px;height:9px;border-radius:50%;background:#ff6a00;box-shadow:0 0 12px #ff6a00"></span>'+
-'<span>CiphAnon Studios</span>'+
-'<span style="opacity:.4;font-weight:400">Panel</span>';
-
-
-tools.style.cssText=
-"display:flex;"+
-"gap:5px;"+
-"align-items:center";
-
-
-/* =========================================================
-   TOOLTIPS
-   ========================================================= */
-
-let currentTip=null;
-
-function showTip(b){
-
-    hideTip();
-
-    currentTip=document.createElement("div");
-
-    currentTip.className="capTip";
-
-    currentTip.textContent=b.dataset.tip||"";
-
-    document.body.appendChild(currentTip);
-
-    const r=b.getBoundingClientRect();
-
-    currentTip.style.left=
-        Math.max(
-            4,
-            r.left+r.width/2-currentTip.offsetWidth/2
-        )+"px";
-
-    currentTip.style.top=
-        r.bottom+7+"px";
-
-    requestAnimationFrame(()=>{
-        if(currentTip){
-            currentTip.style.opacity="1";
-        }
-    });
-}
-
-function hideTip(){
-
-    if(currentTip){
-        currentTip.remove();
-        currentTip=null;
-    }
-}
-
-
-/* =========================================================
-   BUTTON CREATOR
-   ========================================================= */
-
-function button(text,tip){
-
-    const b=document.createElement("button");
-
-    b.textContent=text;
-
-    b.dataset.tip=tip;
-
-    b.className="capBtn";
-
-    b.style.cssText=
-        "width:31px;"+
-        "height:29px;"+
-        "border:0;"+
-        "border-radius:7px;"+
-        "background:#292929;"+
-        "color:#fff;"+
-        "cursor:pointer;"+
-        "font-size:14px";
-
-    b.addEventListener(
-        "mouseenter",
-        ()=>showTip(b)
-    );
-
-    b.addEventListener(
-        "mouseleave",
-        hideTip
-    );
-
-    return b;
-}
-
-
-/* =========================================================
-   HEADER BUTTONS
-   ========================================================= */
-
-const back=button("←","Go back");
-const forward=button("→","Go forward");
-const reload=button("↻","Reload");
-const theme=button("☾","Toggle theme");
-const opacity=button("◐","Change opacity");
-const compact=button("≡","Compact toolbar");
-const miniBtn=button("−","Minimize / restore");
-const full=button("⛶","Fullscreen / windowed");
-const consoleBtn=button("⌘","Developer console");
-
-const specialBtn=button(
-    SPECIAL_PAGE.buttonText,
-    SPECIAL_PAGE.buttonTip
-);
-
-const close=button("×","Close panel");
-
-
-specialBtn.style.display="none";
-
-
-[
-    back,
-    forward,
-    reload,
-    theme,
-    opacity,
-    compact,
-    miniBtn,
-    full,
-    consoleBtn,
-    specialBtn,
-    close
-].forEach(x=>tools.appendChild(x));
-
-
-bar.append(title,tools);
-
-
-/* =========================================================
-   BODY
-   ========================================================= */
-
-body.style.cssText=
-"flex:1;"+
-"position:relative;"+
-"display:flex;"+
-"flex-direction:column;"+
-"overflow:hidden";
-
-
-/* =========================================================
-   NAVIGATION BAR
-   ========================================================= */
-
-nav.style.cssText=
-"height:42px;"+
-"flex:none;"+
-"background:#f5f5f5;"+
-"border-bottom:1px solid #ddd;"+
-"display:flex;"+
-"align-items:center;"+
-"gap:6px;"+
-"padding:6px 8px";
-
-
-urlInput.type="text";
-urlInput.spellcheck=false;
-urlInput.autocomplete="off";
-urlInput.placeholder="Enter destination URL...";
-
-urlInput.style.cssText=
-"flex:1;"+
-"height:29px;"+
-"border:1px solid #ddd;"+
-"border-radius:7px;"+
-"padding:0 9px;"+
-"font:12px Arial;"+
-"outline:none";
-
-
-function action(text,tip,fn){
-
-    const b=document.createElement("button");
-
-    b.textContent=text;
-    b.dataset.tip=tip;
-    b.className="capAction";
-
-    b.style.cssText=
-        "height:29px;"+
-        "border:1px solid #ddd;"+
-        "background:#fff;"+
-        "border-radius:7px;"+
-        "padding:0 9px;"+
-        "cursor:pointer;"+
-        "font-size:12px";
-
-    b.onclick=fn;
-
-    b.onmouseenter=()=>showTip(b);
-    b.onmouseleave=hideTip;
-
-    return b;
-}
-
-
-const go=action(
-    "Go",
-    "Navigate to URL",
-    ()=>{
-        navigate(urlInput.value.trim());
-    }
-);
-
-
-const copy=action(
-    "Copy",
-    "Copy current destination",
-    async()=>{
-
-        const u=destinationUrl;
-
-        try{
-
-            await navigator.clipboard.writeText(u);
-
-            toast("URL copied","success");
-
-        }catch(e){
-
-            const x=document.createElement("textarea");
-
-            x.value=u;
-
-            document.body.appendChild(x);
-
-            x.select();
-
-            document.execCommand("copy");
-
-            x.remove();
-
-            toast("URL copied","success");
-        }
-    }
-);
-
-
-nav.append(
-    back,
-    forward,
-    urlInput,
-    go,
-    copy
-);
-
-
-/* =========================================================
-   IFRAME
-   ========================================================= */
-
-frame.style.cssText=
-"position:absolute;"+
-"inset:0;"+
-"width:100%;"+
-"height:100%;"+
-"border:0;"+
-"background:#fff;"+
-"z-index:1";
-
-
-frame.allowFullscreen=true;
-
-frame.setAttribute(
-    "allow",
-    "autoplay;fullscreen"
-);
-
-
-/* =========================================================
-   LOADING OVERLAY
-   ========================================================= */
-
-overlay.style.cssText=
-"position:absolute;"+
-"inset:0;"+
-"width:100%;"+
-"height:100%;"+
-"border:0;"+
-"background:#181818;"+
-"z-index:5;"+
-"opacity:1;"+
-"transition:opacity .45s";
-
-
-overlay.setAttribute(
-    "allow",
-    "autoplay;fullscreen"
-);
-
-
-/* =========================================================
-   STATUS
-   ========================================================= */
-
-const status=document.createElement("span");
-
-status.style.cssText=
-"position:absolute;"+
-"left:10px;"+
-"bottom:7px;"+
-"padding:4px 7px;"+
-"background:rgba(0,0,0,.65);"+
-"color:#fff;"+
-"border-radius:5px;"+
-"font:10px Arial;"+
-"z-index:25;"+
-"pointer-events:none";
-
-status.textContent="Starting...";
-
-
-/* =========================================================
-   RESIZE HANDLE
-   ========================================================= */
-
-resize.style.cssText=
-"position:absolute;"+
-"right:0;"+
-"bottom:0;"+
-"width:18px;"+
-"height:18px;"+
-"cursor:nwse-resize;"+
-"background:linear-gradient(135deg,transparent 45%,#ff6a00 46%,#ff6a00 55%,transparent 56%);"+
-"z-index:30";
-
-
-body.append(
-    nav,
-    frame,
-    overlay,
-    status,
-    resize
-);
-
-p.append(
-    bar,
-    body
-);
-
-document.body.appendChild(p);
-
-
-/* =========================================================
-   STATE
-   ========================================================= */
-
-let dark=saved.dark==="1";
-let fs=false;
-let compactMode=saved.compact==="1";
-
-let drag=false;
-let resizing=false;
-
-let dx=0;
-let dy=0;
-
-let rw=0;
-let rh=0;
-
-let rx=0;
-let ry=0;
-
-let devConsole=null;
-let commandInput=null;
-let commandMenu=null;
-
-let specialPanel=null;
-
-let specialDrag=false;
-let specialDX=0;
-let specialDY=0;
-
-let hideTimer=null;
-
-let startTime=Date.now();
-
-let destinationUrl=
-    saved.destinationUrl||
-    DEFAULT_DESTINATION;
-
-let loadingUrl=
-    saved.loadingUrl||
-    "about:blank";
-
-let minDelay=Number(saved.minDelay);
-let maxDelay=Number(saved.maxDelay);
-
-if(!Number.isFinite(minDelay)){
-    minDelay=DEFAULT_MIN_DELAY;
-}
-
-if(!Number.isFinite(maxDelay)){
-    maxDelay=DEFAULT_MAX_DELAY;
-}
-
-
-/* =========================================================
-   KEYBINDS
-   ========================================================= */
-
-const defaultBinds={
-    "ctrl+shift+p":"panel",
-    "ctrl+shift+c":"console",
-    "ctrl+shift+m":"minimize",
-    "ctrl+shift+f":"fullscreen",
-    "ctrl+shift+r":"reload",
-    "escape":"hide"
-};
-
-const binds=Object.assign(
-    {},
-    defaultBinds,
-    saved.binds||{}
-);
-
-
-/* =========================================================
-   SAVE
-   ========================================================= */
-
-function getState(){
-
-    return{
-        left:p.style.left,
-        top:p.style.top,
-
-        width:p.style.width,
-        height:p.style.height,
-
-        opacity:p.style.opacity,
-
-        radius:p.style.borderRadius,
-
-        dark:dark?"1":"0",
-
-        compact:compactMode?"1":"0",
-
-        binds:binds,
-
-        destinationUrl:destinationUrl,
-
-        loadingUrl:loadingUrl,
-
-        minDelay:minDelay,
-
-        maxDelay:maxDelay
-    };
-}
-
-
-function save(){
-
-    try{
-
-        localStorage.setItem(
-            KEY,
-            JSON.stringify(getState())
-        );
-
-    }catch(e){}
-}
-
-
-/* =========================================================
-   TOAST
-   ========================================================= */
-
-function toast(text,type="info"){
-
-    const old=document.getElementById(TOAST);
-
-    if(old)old.remove();
-
-    const t=document.createElement("div");
-
-    t.id=TOAST;
-
-    t.textContent=text;
-
-    Object.assign(t.style,{
-
-        position:"fixed",
-
-        right:"18px",
-        bottom:"18px",
-
-        zIndex:"2147483647",
-
-        background:
-            type==="error"
-                ?"#c63b3b"
-                :type==="success"
-                    ?"#15915c"
-                    :"#181818",
-
-        color:"#fff",
-
-        padding:"10px 14px",
-
-        borderRadius:"9px",
-
-        font:"12px Arial",
-
-        boxShadow:"0 10px 30px rgba(0,0,0,.3)",
-
-        transition:".2s",
-
-        opacity:"0",
-
-        transform:"translateY(8px)"
-    });
-
-    document.body.appendChild(t);
-
-    requestAnimationFrame(()=>{
-
-        t.style.opacity="1";
-
-        t.style.transform="translateY(0)";
-    });
-
-    setTimeout(()=>{
-
-        t.style.opacity="0";
-
-        t.style.transform="translateY(8px)";
-
-        setTimeout(()=>{
-            t.remove();
-        },250);
-
-    },1800);
-}
-
-
-/* =========================================================
-   THEME
-   ========================================================= */
-
-function applyTheme(){
-
-    const bg=dark?"#161616":"#fff";
-    const fg=dark?"#eee":"#222";
-    const cb=dark?"#202020":"#f5f5f5";
-    const border=dark?"#333":"#ddd";
-
-    p.style.background=bg;
-
-    nav.style.background=cb;
-    nav.style.borderColor=border;
-
-    urlInput.style.background=
-        dark?"#1c1c1c":"#fff";
-
-    urlInput.style.color=fg;
-
-    urlInput.style.borderColor=border;
-
-
-    document
-        .querySelectorAll(
-            "#"+ID+" .capAction"
-        )
-        .forEach(b=>{
-
-            b.style.background=
-                dark?"#222":"#fff";
-
-            b.style.color=fg;
-
-            b.style.borderColor=border;
-        });
-
-
-    if(specialPanel){
-
-        specialPanel.classList.toggle(
-            "dark",
-            dark
-        );
-    }
-
-
-    if(devConsole){
-        applyConsoleTheme();
-    }
-
-
-    save();
-}
-
-
-/* =========================================================
-   COMPACT
-   ========================================================= */
-
-function applyCompact(){
-
-    if(compactMode){
-
-        nav.style.display="none";
-
-        bar.style.height="38px";
-
-    }else{
-
-        nav.style.display="flex";
-
-        bar.style.height="44px";
-    }
-
-    save();
-}
-
-
-/* =========================================================
-   BUILT-IN LOADER
-   ========================================================= */
-
-function createLoader(){
-
-    overlay.srcdoc=`
-
-<!doctype html>
-
-<html>
-
-<head>
-
-<meta charset="utf-8">
-
-<style>
-
-html,body{
-    margin:0;
-    width:100%;
-    height:100%;
-    overflow:hidden;
-}
-
-body{
-    display:flex;
-    align-items:center;
-    justify-content:center;
-
-    background:#181818;
-    color:#fff;
-
-    font-family:Arial;
-}
-
-.wrap{
-    text-align:center;
-}
-
-.logo{
-    width:18px;
-    height:18px;
-
-    margin:auto auto 15px;
-
-    border-radius:50%;
-
-    background:#ff6a00;
-
-    box-shadow:0 0 25px #ff6a00;
-
-    animation:p 1.2s infinite;
-}
-
-.title{
-    font-size:20px;
-    font-weight:700;
-}
-
-.sub{
-    margin-top:8px;
-
-    color:#aaa;
-
-    font-size:12px;
-}
-
-.loader{
-    width:190px;
-    height:4px;
-
-    background:#333;
-
-    border-radius:8px;
-
-    overflow:hidden;
-
-    margin:22px auto;
-}
-
-.loader span{
-    display:block;
-
-    width:45%;
-    height:100%;
-
-    background:#ff6a00;
-
-    border-radius:8px;
-
-    animation:l 1.2s infinite;
-}
-
-@keyframes p{
-
-    50%{
-        transform:scale(1.4);
-        opacity:.6;
-    }
-
-}
-
-@keyframes l{
-
-    0%{
-        transform:translateX(-110%);
-    }
-
-    100%{
-        transform:translateX(440%);
-    }
-
-}
-
-</style>
-
-</head>
-
-<body>
-
-<div class="wrap">
-
-<div class="logo"></div>
-
-<div class="title">
-CiphAnon Studios
-</div>
-
-<div class="sub">
-Loading destination...
-</div>
-
-<div class="loader">
-<span></span>
-</div>
+    </div>
 
 </div>
 
-</body>
+<div class="capUrl">
 
-</html>
+    <input
+        id="ciphAnonUrl"
+        type="text"
+        value="${DEFAULT_DESTINATION}"
+        spellcheck="false"
+    >
+
+    <button id="ciphAnonGo" title="Go">Go</button>
+    <button id="ciphAnonCopy" title="Copy URL">Copy</button>
+
+</div>
+
+<div class="capBody">
+
+    <iframe
+        id="ciphAnonFrame"
+        allow="fullscreen"
+    ></iframe>
+
+    <div
+        class="loading"
+        id="ciphAnonLoading"
+    >
+        <iframe id="ciphAnonLoadingFrame"></iframe>
+        <div class="loadingText">
+            Loading...
+        </div>
+    </div>
+
+</div>
 
 `;
-}
 
+document.body.appendChild(panel);
 
-/* =========================================================
+/* ==============================
+   ELEMENTS
+   ============================== */
+
+const frame=$("ciphAnonFrame");
+const urlInput=$("ciphAnonUrl");
+const loading=$("ciphAnonLoading");
+const loadingFrame=$("ciphAnonLoadingFrame");
+const specialBtn=document.getElementById("ciphAnonSpecialBtn");
+
+/* ==============================
    LOADING
-   ========================================================= */
+   ============================== */
+
+let loadingTimer;
 
 function startLoading(){
+    clearTimeout(loadingTimer);
 
-    if(hideTimer){
-        clearTimeout(hideTimer);
-    }
+    loading.style.display="block";
 
-    overlay.style.display="block";
-
-    overlay.style.opacity="1";
-
-
-    if(
-        loadingUrl &&
-        loadingUrl!=="about:blank"
-    ){
-
-        overlay.srcdoc="";
-
-        overlay.src=loadingUrl;
-
-    }else{
-
-        overlay.src="";
-
-        createLoader();
-    }
-
-
-    const low=Math.max(
-        0,
-        Math.min(minDelay,maxDelay)
-    );
-
-    const high=Math.max(
-        low,
-        Math.max(minDelay,maxDelay)
-    );
-
-
-    const delay=
-        Math.floor(
-            Math.random()*
-            (high-low+1)
-        )+low;
-
-
-    const started=Date.now();
-
-
-    const interval=setInterval(()=>{
-
-        const pct=
-            delay===0
-                ?100
-                :clamp(
-                    Math.floor(
-                        (Date.now()-started)/
-                        delay*
-                        100
-                    ),
-                    0,
-                    99
-                );
-
-        status.textContent=
-            "Loading "+pct+"%";
-
-    },100);
-
-
-    hideTimer=setTimeout(()=>{
-
-        clearInterval(interval);
-
-        overlay.style.opacity="0";
-
-        status.textContent="Ready";
-
-
-        setTimeout(()=>{
-
-            overlay.style.display="none";
-
-            overlay.src="";
-
-            overlay.srcdoc="";
-
-        },500);
-
-    },delay);
+    loadingTimer=setTimeout(()=>{
+        loading.style.display="none";
+    },5000);
 }
 
+function stopLoading(){
+    clearTimeout(loadingTimer);
+    loading.style.display="none";
+}
 
-/* =========================================================
+/* ==============================
    NAVIGATION
-   ========================================================= */
+   ============================== */
+
+let currentUrl=DEFAULT_DESTINATION;
+
+function navigate(url){
+    if(!url) return;
+
+    let finalUrl=url.trim();
+
+    if(!/^https?:\/\//i.test(finalUrl)){
+        finalUrl="https://"+finalUrl;
+    }
+
+    currentUrl=finalUrl;
+
+    urlInput.value=finalUrl;
+
+    updateSpecialButton(finalUrl);
+
+    startLoading();
+
+    frame.src=finalUrl;
+}
 
 function reloadPage(){
-
-    status.textContent="Reloading...";
-
-    frame.dataset.destination=
-        destinationUrl;
-
-    frame.src=
-        destinationUrl;
-
     startLoading();
 
-    updateSpecialButton(
-        destinationUrl
-    );
-}
-
-
-function navigate(u){
-
-    if(!valid(u)){
-
-        toast(
-            "Invalid URL",
-            "error"
-        );
-
-        return;
-    }
-
-
-    destinationUrl=
-        new URL(
-            u,
-            location.href
-        ).href;
-
-
-    frame.dataset.destination=
-        destinationUrl;
-
-    urlInput.value=
-        destinationUrl;
-
-
-    frame.src=
-        destinationUrl;
-
-
-    save();
-
-    startLoading();
-
-    updateSpecialButton(
-        destinationUrl
-    );
-}
-
-
-/* =========================================================
-   HIDE / SHOW
-   ========================================================= */
-
-function hidePanel(){
-
-    p.style.display="none";
-
-
-    let m=document.getElementById(MIN);
-
-
-    if(!m){
-
-        m=document.createElement("button");
-
-        m.id=MIN;
-
-        m.textContent="C";
-
-        m.dataset.tip=
-            "Restore CiphAnon Panel";
-
-
-        m.style.cssText=
-            "position:fixed;"+
-            "right:16px;"+
-            "bottom:16px;"+
-            "width:46px;"+
-            "height:46px;"+
-            "border:0;"+
-            "border-radius:13px;"+
-            "background:#181818;"+
-            "color:#ff6a00;"+
-            "font-weight:800;"+
-            "font-size:16px;"+
-            "z-index:2147483647;"+
-            "cursor:pointer;"+
-            "box-shadow:0 10px 30px rgba(0,0,0,.3)";
-
-
-        m.onclick=showPanel;
-
-        m.onmouseenter=
-            ()=>showTip(m);
-
-        m.onmouseleave=
-            hideTip;
-
-
-        document.body.appendChild(m);
+    try{
+        frame.contentWindow.location.reload();
+    }catch(e){
+        frame.src=currentUrl;
     }
 }
 
-
-function showPanel(){
-
-    p.style.display="flex";
-
-    const m=
-        document.getElementById(MIN);
-
-    if(m)m.remove();
-}
-
-
-function togglePanel(){
-
-    if(p.style.display==="none"){
-        showPanel();
-    }else{
-        hidePanel();
+function goBack(){
+    try{
+        frame.contentWindow.history.back();
+    }catch(e){
+        toast("Back unavailable");
     }
 }
 
-
-/* =========================================================
-   SPECIAL LIST
-   ========================================================= */
-
-function createSpecialPanel(){
-
-    if(specialPanel){
-
-        specialPanel.style.display="flex";
-
-        specialPanel.style.zIndex=
-            "2147483647";
-
-        return;
-    }
-
-
-    specialPanel=
-        document.createElement("div");
-
-    specialPanel.id=SPECIAL;
-
-
-    const head=
-        document.createElement("div");
-
-    head.className="specialHead";
-
-
-    const specialTitle=
-        document.createElement("div");
-
-    specialTitle.className=
-        "specialTitle";
-
-
-    specialTitle.innerHTML=
-        '<span class="specialDot"></span>'+
-        '<span>'+
-        SPECIAL_PAGE.panelTitle+
-        '</span>';
-
-
-    const closeBtn=
-        document.createElement("button");
-
-    closeBtn.className=
-        "specialClose";
-
-    closeBtn.textContent="×";
-
-    closeBtn.dataset.tip=
-        "Close list";
-
-
-    closeBtn.onclick=()=>{
-        closeSpecialPanel();
-    };
-
-
-    head.append(
-        specialTitle,
-        closeBtn
-    );
-
-
-    const listBody=
-        document.createElement("div");
-
-    listBody.className=
-        "specialBody";
-
-
-    const items=
-        Array.isArray(SPECIAL_PAGE.items)
-            ?SPECIAL_PAGE.items
-            :[];
-
-
-    if(items.length){
-
-        items.forEach(
-            (item,index)=>{
-
-                const row=
-                    document.createElement(
-                        "div"
-                    );
-
-                row.className=
-                    "specialItem";
-
-                row.textContent=
-                    item;
-
-                row.dataset.index=
-                    index+1;
-
-                listBody.appendChild(row);
-            }
-        );
-
-    }else{
-
-        const empty=
-            document.createElement(
-                "div"
-            );
-
-        empty.className=
-            "specialEmpty";
-
-        empty.textContent=
-            "No items added yet.";
-
-        listBody.appendChild(empty);
-    }
-
-
-    const footer=
-        document.createElement("div");
-
-    footer.className=
-        "specialFooter";
-
-    footer.textContent=
-        items.length+
-        " item"+
-        (
-            items.length===1
-                ?""
-                :"s"
-        );
-
-
-    specialPanel.append(
-        head,
-        listBody,
-        footer
-    );
-
-
-    document.body.appendChild(
-        specialPanel
-    );
-
-
-    applyTheme();
-
-
-    /* Dragging */
-
-    head.addEventListener(
-        "mousedown",
-        e=>{
-
-            if(e.target.closest("button")){
-                return;
-            }
-
-            specialDrag=true;
-
-            const r=
-                specialPanel.getBoundingClientRect();
-
-            specialDX=
-                e.clientX-r.left;
-
-            specialDY=
-                e.clientY-r.top;
-
-            e.preventDefault();
-        }
-    );
-
-
-    const moveSpecial=e=>{
-
-        if(!specialDrag)return;
-
-        const r=
-            specialPanel.getBoundingClientRect();
-
-        let x=
-            e.clientX-specialDX;
-
-        let y=
-            e.clientY-specialDY;
-
-
-        x=clamp(
-            x,
-            0,
-            Math.max(
-                0,
-                window.innerWidth-r.width
-            )
-        );
-
-
-        y=clamp(
-            y,
-            0,
-            Math.max(
-                0,
-                window.innerHeight-r.height
-            )
-        );
-
-
-        specialPanel.style.left=
-            x+"px";
-
-        specialPanel.style.top=
-            y+"px";
-
-        specialPanel.style.transform=
-            "none";
-    };
-
-
-    document.addEventListener(
-        "mousemove",
-        moveSpecial
-    );
-
-
-    document.addEventListener(
-        "mouseup",
-        ()=>{
-            specialDrag=false;
-        }
-    );
-
-
-    specialPanel.addEventListener(
-        "mousedown",
-        ()=>{
-            specialPanel.style.zIndex=
-                "2147483647";
-        }
-    );
-}
-
-
-function closeSpecialPanel(){
-
-    if(specialPanel){
-
-        specialPanel.remove();
-
-        specialPanel=null;
+function goForward(){
+    try{
+        frame.contentWindow.history.forward();
+    }catch(e){
+        toast("Forward unavailable");
     }
 }
 
+/* ==============================
+   SPECIAL BUTTON
+   ============================== */
 
-/* =========================================================
-   SPECIAL BUTTON DETECTION
-   ========================================================= */
+function updateSpecialButton(url){
 
-function updateSpecialButton(currentUrl){
-
-    const match=
-        urlMatches(currentUrl);
-
+    const visible=isSpecialPage(url);
 
     specialBtn.style.display=
-        match
-            ?"block"
-            :"none";
+        visible ? "inline-block" : "none";
 
-
-    if(!match){
-
-        closeSpecialPanel();
+    if(!visible){
+        closeSpecial();
     }
 }
 
+/* ==============================
+   SPECIAL PANEL
+   ============================== */
 
-/* =========================================================
-   KEY NORMALIZER
-   ========================================================= */
+const special=document.createElement("div");
+special.id=SPECIAL;
 
-function normalizeKey(e){
+let listHtml="";
 
-    const a=[];
+SPECIAL_PAGE.items.forEach((item,index)=>{
+    listHtml+=`
+        <div class="specialItem">
+            ${index+1}. ${String(item)}
+        </div>
+    `;
+});
 
-    if(e.ctrlKey)a.push("ctrl");
-    if(e.shiftKey)a.push("shift");
-    if(e.altKey)a.push("alt");
-    if(e.metaKey)a.push("meta");
+special.innerHTML=`
 
+<div class="specialHead">
 
-    let k=e.key.toLowerCase();
+    <div class="specialTitle">
+        ${SPECIAL_PAGE.panelTitle}
+    </div>
 
+    <button id="specialClose" title="Close">
+        ×
+    </button>
 
-    if(k===" "){
-        k="space";
-    }
+</div>
 
+<div class="specialList">
+    ${listHtml}
+</div>
 
-    if(
-        ![
-            "control",
-            "shift",
-            "alt",
-            "meta"
-        ].includes(k)
-    ){
-        a.push(k);
-    }
+<div class="specialFoot">
+    ${SPECIAL_PAGE.items.length} items
+</div>
 
+`;
 
-    return a.join("+");
+document.body.appendChild(special);
+
+function openSpecial(){
+    special.style.display="block";
 }
 
-
-/* =========================================================
-   ACTION HANDLER
-   ========================================================= */
-
-function runAction(name){
-
-    switch(name){
-
-        case"panel":
-            togglePanel();
-            break;
-
-        case"console":
-            createConsole();
-            break;
-
-        case"minimize":
-            hidePanel();
-            break;
-
-        case"fullscreen":
-            full.click();
-            break;
-
-        case"reload":
-            reloadPage();
-            break;
-
-        case"hide":
-            hidePanel();
-            break;
-
-        case"show":
-            showPanel();
-            break;
-
-        case"special":
-            if(urlMatches(destinationUrl)){
-                createSpecialPanel();
-            }
-            break;
-    }
+function closeSpecial(){
+    special.style.display="none";
 }
 
+document.getElementById("specialClose")
+    .addEventListener("click",closeSpecial);
 
-/* =========================================================
-   COMMANDS
-   ========================================================= */
+specialBtn.addEventListener("click",openSpecial);
 
-const commands=[
+/* ==============================
+   FRAME LOAD
+   ============================== */
 
-    ["/help","Show all commands"],
-    ["/status","Show panel status"],
-    ["/uptime","Show session uptime"],
+frame.addEventListener("load",()=>{
 
-    ["/reload","Reload destination"],
-    ["/back","Go back"],
-    ["/forward","Go forward"],
+    stopLoading();
 
-    ["/url","Show current URL"],
-    ["/go URL","Navigate to URL"],
+    try{
+        const u=frame.contentWindow.location.href;
 
-    ["/destination URL","Set destination"],
-    ["/loading URL","Set custom loading page"],
-    ["/loader","Use built-in loader"],
+        currentUrl=u;
+        urlInput.value=u;
 
-    ["/delay MIN MAX","Set loading delay"],
+        updateSpecialButton(u);
 
-    ["/theme","Toggle theme"],
-    ["/opacity","Cycle opacity"],
-    ["/zoom NUMBER","Set iframe zoom"],
+    }catch(e){
 
-    ["/size WIDTH HEIGHT","Resize panel"],
-    ["/position X Y","Move panel"],
-    ["/snap LEFT|RIGHT|TOP|BOTTOM","Snap panel"],
+        updateSpecialButton(frame.src || currentUrl);
 
-    ["/hide","Hide panel"],
-    ["/show","Show panel"],
-    ["/toggle","Toggle panel"],
-
-    ["/compact","Toggle compact mode"],
-    ["/toolbar","Toggle toolbar"],
-
-    ["/fullscreen","Toggle fullscreen"],
-    ["/minimize","Minimize/restore"],
-
-    ["/special","Open special list"],
-    ["/special-close","Close special list"],
-
-    ["/console","Open console"],
-    ["/clear","Clear console"],
-
-    ["/bind KEY ACTION","Create keybind"],
-    ["/unbind KEY","Remove keybind"],
-    ["/binds","Show keybinds"],
-
-    ["/reset","Reset saved settings"]
-];
-
-
-/* =========================================================
-   CONSOLE OUTPUT
-   ========================================================= */
-
-function addLine(text,type=""){
-
-    if(!devConsole)return;
-
-
-    const line=
-        document.createElement("div");
-
-    line.className=
-        "ciphConsoleLine";
-
-
-    line.style.cssText=
-        "padding:4px 0;"+
-        "border-bottom:1px solid #ddd;"+
-        "font:12px monospace;"+
-        "white-space:pre-wrap;"+
-        "word-break:break-word";
-
-
-    if(type==="error"){
-        line.style.color="#e04848";
     }
 
-    if(type==="success"){
-        line.style.color="#15915c";
+});
+
+/* ==============================
+   URL CONTROLS
+   ============================== */
+
+$("ciphAnonGo").addEventListener("click",()=>{
+    navigate(urlInput.value);
+});
+
+$("ciphAnonCopy").addEventListener("click",async()=>{
+
+    try{
+        await navigator.clipboard.writeText(urlInput.value);
+        toast("URL copied");
+    }catch(e){
+        urlInput.select();
+        document.execCommand("copy");
+        toast("URL copied");
     }
 
-    if(type==="command"){
-        line.style.color="#ff6a00";
+});
+
+urlInput.addEventListener("keydown",e=>{
+    if(e.key==="Enter"){
+        navigate(urlInput.value);
+    }
+});
+
+/* ==============================
+   TOOL BUTTONS
+   ============================== */
+
+let darkMode=true;
+let opacity=1;
+let compact=false;
+let fullscreen=false;
+
+function setTheme(){
+
+    if(darkMode){
+
+        panel.style.background="#111";
+        panel.style.color="#fff";
+
+    }else{
+
+        panel.style.background="#f4f4f4";
+        panel.style.color="#111";
+
     }
 
-
-    line.textContent=text;
-
-
-    const out=
-        devConsole.querySelector(
-            ".ciphConsoleOutput"
-        );
-
-
-    out.appendChild(line);
-
-    out.scrollTop=
-        out.scrollHeight;
+    darkMode=!darkMode;
 }
 
+function changeOpacity(){
 
-/* =========================================================
-   CONSOLE THEME
-   ========================================================= */
+    const values=[
+        1,
+        0.9,
+        0.8,
+        0.7,
+        0.6
+    ];
 
-function applyConsoleTheme(){
+    let index=values.indexOf(opacity);
 
-    if(!devConsole)return;
+    index++;
 
+    if(index>=values.length){
+        index=0;
+    }
 
-    devConsole.style.background=
-        dark
-            ?" #111"
-            :"#f7f7f7";
+    opacity=values[index];
 
+    panel.style.opacity=opacity;
+}
 
-    devConsole.style.color=
-        dark
-            ?" #eee"
-            :"#222";
+function toggleCompact(){
 
+    compact=!compact;
 
-    if(commandInput){
+    if(compact){
 
-        commandInput.style.background=
-            dark
-                ?" #1c1c1c"
-                :"#fff";
+        panel.style.width="600px";
+        panel.style.height="420px";
 
-        commandInput.style.color=
-            dark
-                ?" #eee"
-                :"#222";
+    }else{
+
+        panel.style.width="900px";
+        panel.style.height="600px";
+
     }
 }
 
+function toggleFullscreen(){
 
-/* =========================================================
-   COMMAND MENU
-   ========================================================= */
+    fullscreen=!fullscreen;
 
-function updateMenu(v){
+    if(fullscreen){
 
-    if(!commandMenu)return;
+        panel.style.left="0";
+        panel.style.top="0";
+        panel.style.transform="none";
+        panel.style.width="100vw";
+        panel.style.height="100vh";
 
+    }else{
 
-    const matches=
-        commands.filter(
-            x=>x[0].startsWith(
-                v.toLowerCase()
-            )
-        );
+        panel.style.left="50%";
+        panel.style.top="50%";
+        panel.style.transform="translate(-50%,-50%)";
+        panel.style.width="900px";
+        panel.style.height="600px";
 
-
-    commandMenu.innerHTML="";
-
-
-    if(
-        !v.startsWith("/")||
-        !matches.length
-    ){
-
-        commandMenu.style.display=
-            "none";
-
-        return;
     }
+}
 
+/* ==============================
+   MINIMIZE
+   ============================== */
 
-    matches.forEach(
-        (x,i)=>{
+const mini=document.createElement("button");
 
-            const b=
-                document.createElement(
-                    "button"
-                );
+mini.id=MINI;
+mini.textContent="C";
+mini.title="Restore CiphAnon Panel";
 
+document.body.appendChild(mini);
 
-            b.textContent=
-                x[0]+"  "+x[1];
+function minimize(){
 
+    panel.style.display="none";
+    mini.style.display="block";
 
-            b.style.cssText=
-                "display:block;"+
-                "width:100%;"+
-                "padding:8px;"+
-                "text-align:left;"+
-                "border:0;"+
-                "background:"+
-                (
-                    i===0
-                        ?" #ff6a00"
-                        :dark
-                            ?" #191919"
-                            :"#fff"
-                )+
-                ";color:"+
-                (
-                    i===0
-                        ?" #fff"
-                        :dark
-                            ?" #eee"
-                            :"#222"
-                )+
-                ";font:12px monospace;"+
-                "cursor:pointer";
+}
 
+function restore(){
 
-            b.onclick=()=>{
+    panel.style.display="block";
+    mini.style.display="block";
 
-                commandInput.value=
-                    x[0]+" ";
+}
 
-                commandInput.focus();
+mini.addEventListener("click",restore);
 
-                updateMenu(
-                    commandInput.value
-                );
-            };
+function closePanel(){
 
+    panel.style.display="none";
+    mini.style.display="block";
 
-            commandMenu.appendChild(b);
+    toast("Panel hidden. Press P to restore.");
+
+}
+
+/* ==============================
+   BUTTON ACTIONS
+   ============================== */
+
+panel.querySelectorAll("[data-action]")
+.forEach(button=>{
+
+    button.addEventListener("click",()=>{
+
+        const action=button.dataset.action;
+
+        if(action==="back"){
+            goBack();
         }
-    );
 
+        else if(action==="forward"){
+            goForward();
+        }
 
-    commandMenu.style.display=
-        "block";
+        else if(action==="reload"){
+            reloadPage();
+        }
+
+        else if(action==="theme"){
+            setTheme();
+        }
+
+        else if(action==="opacity"){
+            changeOpacity();
+        }
+
+        else if(action==="compact"){
+            toggleCompact();
+        }
+
+        else if(action==="minimize"){
+            minimize();
+        }
+
+        else if(action==="fullscreen"){
+            toggleFullscreen();
+        }
+
+        else if(action==="console"){
+            toggleConsole();
+        }
+
+        else if(action==="close"){
+            closePanel();
+        }
+
+    });
+
+});
+
+/* ==============================
+   DRAG MAIN PANEL
+   ============================== */
+
+let dragging=false;
+let dragX=0;
+let dragY=0;
+
+const topBar=panel.querySelector(".capTop");
+
+topBar.addEventListener("mousedown",e=>{
+
+    if(e.target.tagName==="BUTTON") return;
+
+    dragging=true;
+
+    const rect=panel.getBoundingClientRect();
+
+    dragX=e.clientX-rect.left;
+    dragY=e.clientY-rect.top;
+
+});
+
+topBar.addEventListener("touchstart",e=>{
+
+    if(e.target.tagName==="BUTTON") return;
+
+    const touch=e.touches[0];
+
+    dragging=true;
+
+    const rect=panel.getBoundingClientRect();
+
+    dragX=touch.clientX-rect.left;
+    dragY=touch.clientY-rect.top;
+
+},{passive:true});
+
+listen(document,"mousemove",e=>{
+
+    if(!dragging) return;
+
+    panel.style.left=(e.clientX-dragX)+"px";
+    panel.style.top=(e.clientY-dragY)+"px";
+    panel.style.transform="none";
+
+});
+
+listen(document,"mouseup",()=>{
+    dragging=false;
+});
+
+listen(document,"touchmove",e=>{
+
+    if(!dragging) return;
+
+    const touch=e.touches[0];
+
+    panel.style.left=(touch.clientX-dragX)+"px";
+    panel.style.top=(touch.clientY-dragY)+"px";
+    panel.style.transform="none";
+
+},{passive:true});
+
+listen(document,"touchend",()=>{
+    dragging=false;
+});
+
+/* ==============================
+   DRAG SPECIAL PANEL
+   ============================== */
+
+let specialDragging=false;
+let specialX=0;
+let specialY=0;
+
+const specialHead=special.querySelector(".specialHead");
+
+specialHead.addEventListener("mousedown",e=>{
+
+    if(e.target.tagName==="BUTTON") return;
+
+    specialDragging=true;
+
+    const rect=special.getBoundingClientRect();
+
+    specialX=e.clientX-rect.left;
+    specialY=e.clientY-rect.top;
+
+    special.style.transform="none";
+
+});
+
+listen(document,"mousemove",e=>{
+
+    if(!specialDragging) return;
+
+    special.style.left=(e.clientX-specialX)+"px";
+    special.style.top=(e.clientY-specialY)+"px";
+
+});
+
+listen(document,"mouseup",()=>{
+    specialDragging=false;
+});
+
+/* ==============================
+   DEVELOPER CONSOLE
+   ============================== */
+
+const devConsole=document.createElement("div");
+
+devConsole.id=CONSOLE;
+
+devConsole.innerHTML=`
+
+<div class="consoleHead">
+
+    <div class="consoleTitle">
+        CiphAnon Console
+    </div>
+
+    <button id="consoleClear">
+        Clear
+    </button>
+
+    <button id="consoleClose">
+        ×
+    </button>
+
+</div>
+
+<div class="consoleOut" id="consoleOut">
+CiphAnon Studios Console
+Type /help for commands.
+</div>
+
+<div class="consoleInput">
+
+    <input
+        id="consoleInput"
+        placeholder="Enter command..."
+        autocomplete="off"
+    >
+
+</div>
+
+`;
+
+document.body.appendChild(devConsole);
+
+const consoleOut=$("consoleOut");
+const consoleInput=$("consoleInput");
+
+function consoleLog(text){
+    consoleOut.textContent+="\n"+text;
+    consoleOut.scrollTop=consoleOut.scrollHeight;
 }
 
+function toggleConsole(){
 
-/* =========================================================
-   COMMAND RUNNER
-   ========================================================= */
+    if(devConsole.style.display==="block"){
+        devConsole.style.display="none";
+    }else{
+        devConsole.style.display="block";
+        consoleInput.focus();
+    }
 
-function runCommand(raw){
+}
 
-    const parts=
-        raw.trim().split(/\s+/);
+$("consoleClose").addEventListener("click",()=>{
+    devConsole.style.display="none";
+});
 
-    const c=
-        (parts.shift()||"").toLowerCase();
+$("consoleClear").addEventListener("click",()=>{
+    consoleOut.textContent="";
+});
 
-    const a=parts;
+function runCommand(command){
 
+    const parts=command.trim().split(/\s+/);
+    const cmd=parts[0].toLowerCase();
 
-    if(c==="/help"){
+    if(!cmd) return;
 
-        commands.forEach(
-            x=>addLine(
-                x[0]+" — "+x[1]
-            )
-        );
+    if(cmd==="/help"){
 
+        consoleLog(`
+Commands:
+
+/help
+/clear
+/hide
+/show
+/minimize
+/restore
+/reload
+/back
+/forward
+/fullscreen
+/compact
+/theme
+/opacity
+/special
+/close-special
+/url
+`);
+
+    }
+
+    else if(cmd==="/clear"){
+        consoleOut.textContent="";
+    }
+
+    else if(cmd==="/hide"){
+        panel.style.display="none";
+    }
+
+    else if(cmd==="/show"){
+        panel.style.display="block";
+    }
+
+    else if(cmd==="/minimize"){
+        minimize();
+    }
+
+    else if(cmd==="/restore"){
+        restore();
+    }
+
+    else if(cmd==="/reload"){
+        reloadPage();
+    }
+
+    else if(cmd==="/back"){
+        goBack();
+    }
+
+    else if(cmd==="/forward"){
+        goForward();
+    }
+
+    else if(cmd==="/fullscreen"){
+        toggleFullscreen();
+    }
+
+    else if(cmd==="/compact"){
+        toggleCompact();
+    }
+
+    else if(cmd==="/theme"){
+        setTheme();
+    }
+
+    else if(cmd==="/opacity"){
+        changeOpacity();
+    }
+
+    else if(cmd==="/special"){
+        openSpecial();
+    }
+
+    else if(cmd==="/close-special"){
+        closeSpecial();
+    }
+
+    else if(cmd==="/url"){
+        consoleLog(currentUrl);
+    }
+
+    else{
+
+        consoleLog("Unknown command: "+cmd);
+
+    }
+
+}
+
+consoleInput.addEventListener("keydown",e=>{
+
+    if(e.key==="Enter"){
+
+        const command=consoleInput.value;
+
+        consoleLog("> "+command);
+
+        runCommand(command);
+
+        consoleInput.value="";
+
+    }
+
+});
+
+/* ==============================
+   KEYBOARD SHORTCUTS
+   ============================== */
+
+listen(document,"keydown",e=>{
+
+    /*
+       Don't trigger shortcuts
+       while typing in inputs.
+    */
+
+    const tag=e.target.tagName;
+
+    if(
+        tag==="INPUT" ||
+        tag==="TEXTAREA" ||
+        e.target.isContentEditable
+    ){
         return;
     }
 
+    if(e.key==="p" || e.key==="P"){
 
-    if(c==="/status"){
+        if(panel.style.display==="none"){
+            restore();
+        }else{
+            closePanel();
+        }
 
-        addLine(
-            "Panel: "+
-            (
-                p.style.display==="none"
-                    ?"hidden"
-                    :"visible"
-            )
-        );
-
-        addLine(
-            "Theme: "+
-            (dark?"dark":"light")
-        );
-
-        addLine(
-            "Size: "+
-            p.offsetWidth+
-            "×"+
-            p.offsetHeight
-        );
-
-        addLine(
-            "Opacity: "+
-            Math.round(
-                parseFloat(
-                    p.style.opacity
-                )*100
-            )+
-            "%"
-        );
-
-        addLine(
-            "Destination: "+
-            destinationUrl
-        );
-
-        addLine(
-            "Special button: "+
-            (
-                urlMatches(
-                    destinationUrl
-                )
-                    ?"visible"
-                    :"hidden"
-            )
-        );
-
-        return;
     }
 
+    else if(e.key==="m" || e.key==="M"){
 
-    if(c==="/uptime"){
+        minimize();
 
-        const s=
-            Math.floor(
-                (Date.now()-startTime)/
-                1000
-            );
-
-
-        addLine(
-            "Session uptime: "+
-            Math.floor(s/3600)+
-            "h "+
-            Math.floor(s%3600/60)+
-            "m "+
-            s%60+
-            "s",
-            "success"
-        );
-
-        return;
     }
 
+    else if(e.key==="f" || e.key==="F"){
 
-    if(c==="/reload"){
+        toggleFullscreen();
+
+    }
+
+    else if(e.key==="r" || e.key==="R"){
 
         reloadPage();
 
-        addLine(
-            "Reloaded.",
-            "success"
-        );
-
-        return;
     }
 
+    else if(e.key==="/"){
 
-    if(c==="/back"){
+        toggleConsole();
 
-        try{
-            frame.contentWindow.history.back();
-        }catch(e){}
-
-        addLine(
-            "Back requested."
-        );
-
-        return;
     }
 
+    else if(e.key==="Escape"){
 
-    if(c==="/forward"){
+        closeSpecial();
 
-        try{
-            frame.contentWindow.history.forward();
-        }catch(e){}
+        devConsole.style.display="none";
 
-        addLine(
-            "Forward requested."
-        );
-
-        return;
-    }
-
-
-    if(c==="/url"){
-
-        addLine(
-            destinationUrl
-        );
-
-        return;
-    }
-
-
-    if(c==="/go"){
-
-        if(!a[0]){
-
-            addLine(
-                "Usage: /go https://example.com",
-                "error"
-            );
-
-            return;
+        if(fullscreen){
+            toggleFullscreen();
         }
 
-
-        navigate(a.join(" "));
-
-        return;
     }
 
+});
 
-    if(c==="/destination"){
+/* ==============================
+   INITIALIZE
+   ============================== */
 
-        if(
-            !a[0]||
-            !valid(a[0])
-        ){
+mini.style.display="none";
 
-            addLine(
-                "Invalid URL.",
-                "error"
-            );
+updateSpecialButton(DEFAULT_DESTINATION);
 
-            return;
-        }
+navigate(DEFAULT_DESTINATION);
 
+toast("CiphAnon Panel loaded");
 
-        destinationUrl=
-            new URL(
-                a[0],
-                location.href
-            ).href;
+/* ==============================
+   CLEANUP INSTANCE
+   ============================== */
 
+const oldCleanup=window.__CIPHANON_CLEANUP;
 
-        urlInput.value=
-            destinationUrl;
+window.__CIPHANON_CLEANUP=()=>{
 
-        frame.dataset.destination=
-            destinationUrl;
+    cleanup.forEach(fn=>{
+        try{fn()}catch(e){}
+    });
 
+    [
+        ID,
+        MINI,
+        STYLE,
+        SPECIAL,
+        CONSOLE,
+        TOAST
+    ].forEach(id=>{
 
-        save();
+        const el=document.getElementById(id);
 
-        updateSpecialButton(
-            destinationUrl
-        );
+        if(el) el.remove();
 
+    });
 
-        addLine(
-            "Destination saved.",
-            "success"
-        );
-
-        return;
-    }
-
-
-    if(c==="/loading"){
-
-        if(
-            !a[0]||
-            !valid(a[0])
-        ){
-
-            addLine(
-                "Invalid URL.",
-                "error"
-            );
-
-            return;
-        }
-
-
-        loadingUrl=
-            new URL(
-                a[0],
-                location.href
-            ).href;
-
-
-        save();
-
-
-        addLine(
-            "Loading page saved.",
-            "success"
-        );
-
-        return;
-    }
-
-
-    if(c==="/loader"){
-
-        loadingUrl=
-            "about:blank";
-
-        save();
-
-
-        addLine(
-            "Built-in loader selected.",
-            "success"
-        );
-
-        return;
-    }
-
-
-    if(c==="/delay"){
-
-        const x=
-            Number(a[0]);
-
-        const y=
-            Number(a[1]);
-
-
-        if(
-            !Number.isFinite(x)||
-            !Number.isFinite(y)||
-            x<0||
-            y<0
-        ){
-
-            addLine(
-                "Usage: /delay 3000 10000",
-                "error"
-            );
-
-            return;
-        }
-
-
-        minDelay=
-            Math.min(x,y);
-
-        maxDelay=
-            Math.max(x,y);
-
-
-        save();
-
-
-        addLine(
-            "Delay set: "+
-            minDelay+
-            "-"+
-            maxDelay+
-            "ms",
-            "success"
-        );
-
-        return;
-    }
-
-
-    if(c==="/theme"){
-
-        theme.click();
-
-        return;
-    }
-
-
-    if(c==="/opacity"){
-
-        opacity.click();
-
-        return;
-    }
-
-
-    if(c==="/zoom"){
-
-        const z=
-            Number(a[0]);
-
-
-        if(
-            !Number.isFinite(z)||
-            z<25||
-            z>200
-        ){
-
-            addLine(
-                "Zoom must be 25-200.",
-                "error"
-            );
-
-            return;
-        }
-
-
-        const scale=z/100;
-
-
-        frame.style.transformOrigin=
-            "top left";
-
-        frame.style.transform=
-            "scale("+scale+")";
-
-        frame.style.width=
-            100/scale+"%";
-
-        frame.style.height=
-            100/scale+"%";
-
-
-        addLine(
-            "Zoom: "+z+"%",
-            "success"
-        );
-
-        return;
-    }
-
-
-    if(c==="/size"){
-
-        const w=
-            parseInt(a[0]);
-
-        const h=
-            parseInt(a[1]);
-
-
-        if(
-            !Number.isFinite(w)||
-            !Number.isFinite(h)
-        ){
-
-            addLine(
-                "Usage: /size 820 520",
-                "error"
-            );
-
-            return;
-        }
-
-
-        p.style.width=
-            clamp(
-                w,
-                350,
-                window.innerWidth
-            )+"px";
-
-
-        p.style.height=
-            clamp(
-                h,
-                220,
-                window.innerHeight
-            )+"px";
-
-
-        save();
-
-
-        addLine(
-            "Size updated.",
-            "success"
-        );
-
-        return;
-    }
-
-
-    if(c==="/position"){
-
-        const x=
-            parseInt(a[0]);
-
-        const y=
-            parseInt(a[1]);
-
-
-        if(
-            !Number.isFinite(x)||
-            !Number.isFinite(y)
-        ){
-
-            addLine(
-                "Usage: /position 80 80",
-                "error"
-            );
-
-            return;
-        }
-
-
-        p.style.left=
-            clamp(
-                x,
-                0,
-                Math.max(
-                    0,
-                    window.innerWidth-
-                    p.offsetWidth
-                )
-            )+"px";
-
-
-        p.style.top=
-            clamp(
-                y,
-                0,
-                Math.max(
-                    0,
-                    window.innerHeight-
-                    p.offsetHeight
-                )
-            )+"px";
-
-
-        save();
-
-
-        addLine(
-            "Position updated.",
-            "success"
-        );
-
-        return;
-    }
-
-
-    if(c==="/snap"){
-
-        const side=
-            (a[0]||"").toLowerCase();
-
-
-        if(side==="left"){
-
-            p.style.left="10px";
-
-        }else if(side==="right"){
-
-            p.style.left=
-                Math.max(
-                    0,
-                    window.innerWidth-
-                    p.offsetWidth-
-                    10
-                )+"px";
-
-        }else if(side==="top"){
-
-            p.style.top="60px";
-
-        }else if(side==="bottom"){
-
-            p.style.top=
-                Math.max(
-                    0,
-                    window.innerHeight-
-                    p.offsetHeight-
-                    10
-                )+"px";
-
-        }else{
-
-            addLine(
-                "Use left, right, top, or bottom.",
-                "error"
-            );
-
-            return;
-        }
-
-
-        save();
-
-
-        addLine(
-            "Snapped "+side+".",
-            "success"
-        );
-
-        return;
-    }
-
-
-    if(c==="/hide"){
-
-        hidePanel();
-
-        return;
-    }
-
-
-    if(c==="/show"){
-
-        showPanel();
-
-        return;
-    }
-
-
-    if(c==="/toggle"){
-
-        togglePanel();
-
-        return;
-    }
-
-
-    if(c==="/compact"){
-
-        compactMode=
-            !compactMode;
-
-        applyCompact();
-
-
-        addLine(
-            "Compact mode "+
-            (
-                compactMode
-                    ?"on"
-                    :"off"
-            ),
-            "success"
-        );
-
-        return;
-    }
-
-
-    if(c==="/toolbar"){
-
-        if(
-            nav.style.display==="none"
-        ){
-
-            nav.style.display="flex";
-
-        }else{
-
-            nav.style.display="none";
-        }
-
-
-        addLine(
-            "Toolbar "+
-            (
-                nav.style.display==="none"
-                    ?"hidden"
-                    :"visible"
-            ),
-            "success"
-        );
-
-        return;
-    }
-
-
-    if(c==="/fullscreen"){
-
-        full.click();
-
-        return;
-    }
-
-
-    if(c==="/minimize"){
-
-        hidePanel();
-
-        return;
-    }
-
-
-    if(c==="/special"){
-
-        if(
-            urlMatches(
-                destinationUrl
-            )
-        ){
-
-            createSpecialPanel();
-
-            addLine(
-                "Special list opened.",
-                "success"
-            );
-
-        }else{
-
-            addLine(
-                "Special list is unavailable on this URL.",
-                "error"
-            );
-        }
-
-        return;
-    }
-
-
-    if(c==="/special-close"){
-
-        closeSpecialPanel();
-
-        addLine(
-            "Special list closed.",
-            "success"
-        );
-
-        return;
-    }
-
-
-    if(c==="/console"){
-
-        if(devConsole){
-            addLine(
-                "Console already open."
-            );
-        }else{
-            createConsole();
-        }
-
-        return;
-    }
-
-
-    if(c==="/clear"){
-
-        if(devConsole){
-
-            devConsole.querySelector(
-                ".ciphConsoleOutput"
-            ).innerHTML="";
-        }
-
-        return;
-    }
-
-
-    if(c==="/bind"){
-
-        const k=
-            (a.shift()||"").toLowerCase();
-
-        const act=
-            (a.shift()||"").toLowerCase();
-
-
-        const allowed=[
-            "panel",
-            "console",
-            "minimize",
-            "fullscreen",
-            "reload",
-            "hide",
-            "show",
-            "special"
-        ];
-
-
-        if(
-            !k||
-            !allowed.includes(act)
-        ){
-
-            addLine(
-                "Usage: /bind ctrl+shift+p console",
-                "error"
-            );
-
-            return;
-        }
-
-
-        binds[k]=act;
-
-        save();
-
-
-        addLine(
-            "Binding saved.",
-            "success"
-        );
-
-        return;
-    }
-
-
-    if(c==="/unbind"){
-
-        const k=
-            (a[0]||"").toLowerCase();
-
-
-        if(!k){
-
-            addLine(
-                "Usage: /unbind KEY",
-                "error"
-            );
-
-            return;
-        }
-
-
-        delete binds[k];
-
-        save();
-
-
-        addLine(
-            "Binding removed.",
-            "success"
-        );
-
-        return;
-    }
-
-
-    if(c==="/binds"){
-
-        Object.keys(binds).forEach(
-            k=>{
-                addLine(
-                    k+" → "+binds[k]
-                );
-            }
-        );
-
-        return;
-    }
-
-
-    if(c==="/reset"){
-
-        try{
-            localStorage.removeItem(KEY);
-        }catch(e){}
-
-
-        addLine(
-            "Saved settings reset. Reopen bookmarklet.",
-            "success"
-        );
-
-        return;
-    }
-
-
-    addLine(
-        "Unknown command. Type /help.",
-        "error"
-    );
-}
-
-
-/* =========================================================
-   DEVELOPER CONSOLE
-   ========================================================= */
-
-function createConsole(){
-
-    if(devConsole){
-
-        commandInput.focus();
-
-        return;
-    }
-
-
-    devConsole=
-        document.createElement("div");
-
-    devConsole.id=
-        CONSOLE;
-
-
-    devConsole.style.cssText=
-        "position:absolute;"+
-        "left:10px;"+
-        "right:10px;"+
-        "bottom:10px;"+
-        "height:285px;"+
-        "z-index:20;"+
-        "border:1px solid #ff6a00;"+
-        "border-radius:10px;"+
-        "background:#f7f7f7;"+
-        "box-shadow:0 12px 35px rgba(0,0,0,.3);"+
-        "display:flex;"+
-        "flex-direction:column;"+
-        "overflow:hidden";
-
-
-    const head=
-        document.createElement("div");
-
-
-    head.style.cssText=
-        "height:32px;"+
-        "flex:none;"+
-        "background:#181818;"+
-        "color:#fff;"+
-        "display:flex;"+
-        "align-items:center;"+
-        "justify-content:space-between;"+
-        "padding:0 9px;"+
-        "font:12px Arial;"+
-        "font-weight:700";
-
-
-    const ht=
-        document.createElement("span");
-
-    ht.textContent=
-        "CiphAnon Dev Console";
-
-
-    const hc=
-        document.createElement("button");
-
-    hc.textContent="×";
-
-    hc.style.cssText=
-        "border:0;"+
-        "background:none;"+
-        "color:#fff;"+
-        "font-size:18px;"+
-        "cursor:pointer";
-
-
-    hc.onclick=()=>{
-
-        devConsole.remove();
-
-        devConsole=null;
-
-        commandInput=null;
-
-        commandMenu=null;
-    };
-
-
-    head.append(ht,hc);
-
-
-    const output=
-        document.createElement("div");
-
-    output.className=
-        "ciphConsoleOutput";
-
-
-    output.style.cssText=
-        "flex:1;"+
-        "overflow:auto;"+
-        "padding:8px";
-
-
-    const row=
-        document.createElement("div");
-
-
-    row.style.cssText=
-        "position:relative;"+
-        "display:flex;"+
-        "gap:6px;"+
-        "padding:7px;"+
-        "border-top:1px solid #ddd";
-
-
-    const prompt=
-        document.createElement("span");
-
-
-    prompt.textContent=">";
-
-    prompt.style.cssText=
-        "padding-top:7px;"+
-        "color:#ff6a00;"+
-        "font-weight:700";
-
-
-    commandInput=
-        document.createElement("input");
-
-
-    commandInput.type="text";
-
-    commandInput.placeholder=
-        "Type / for commands...";
-
-    commandInput.autocomplete="off";
-
-    commandInput.spellcheck=false;
-
-
-    commandInput.style.cssText=
-        "flex:1;"+
-        "height:30px;"+
-        "border:1px solid #ddd;"+
-        "border-radius:6px;"+
-        "padding:0 9px;"+
-        "font:12px monospace;"+
-        "outline:none";
-
-
-    commandMenu=
-        document.createElement("div");
-
-
-    commandMenu.style.cssText=
-        "display:none;"+
-        "position:absolute;"+
-        "left:7px;"+
-        "right:7px;"+
-        "bottom:45px;"+
-        "max-height:180px;"+
-        "overflow:auto;"+
-        "border:1px solid #ddd;"+
-        "border-radius:7px;"+
-        "z-index:30;"+
-        "box-shadow:0 8px 25px rgba(0,0,0,.2)";
-
-
-    row.append(
-        prompt,
-        commandInput,
-        commandMenu
-    );
-
-
-    devConsole.append(
-        head,
-        output,
-        row
-    );
-
-
-    body.appendChild(
-        devConsole
-    );
-
-
-    applyConsoleTheme();
-
-
-    addLine(
-        "CiphAnon Dev Console ready.",
-        "success"
-    );
-
-    addLine(
-        "Type /help for commands."
-    );
-
-    addLine(
-        "Destination: "+
-        destinationUrl
-    );
-
-
-    commandInput.focus();
-
-
-    commandInput.oninput=()=>{
-        updateMenu(
-            commandInput.value
-        );
-    };
-
-
-    commandInput.onkeydown=e=>{
-
-        if(e.key==="Escape"){
-
-            devConsole.remove();
-
-            devConsole=null;
-
-            commandInput=null;
-
-            commandMenu=null;
-
-            return;
-        }
-
-
-        if(e.key==="Tab"){
-
-            const first=
-                commandMenu.querySelector(
-                    "button"
-                );
-
-
-            if(first){
-
-                e.preventDefault();
-
-                commandInput.value=
-                    first.textContent
-                        .split("  ")[0]+
-                    " ";
-
-                updateMenu(
-                    commandInput.value
-                );
-            }
-
-            return;
-        }
-
-
-        if(e.key==="Enter"){
-
-            const v=
-                commandInput.value.trim();
-
-
-            if(v){
-
-                addLine(
-                    "> "+v,
-                    "command"
-                );
-
-                runCommand(v);
-            }
-
-
-            commandInput.value="";
-
-            commandMenu.style.display=
-                "none";
-        }
-    };
-}
-
-
-/* =========================================================
-   DRAGGING MAIN PANEL
-   ========================================================= */
-
-bar.addEventListener(
-    "mousedown",
-    e=>{
-
-        if(e.target.closest("button")){
-            return;
-        }
-
-
-        drag=true;
-
-
-        dx=
-            e.clientX-
-            p.offsetLeft;
-
-        dy=
-            e.clientY-
-            p.offsetTop;
-
-
-        frame.style.pointerEvents=
-            "none";
-    }
-);
-
-
-document.addEventListener(
-    "mousemove",
-    e=>{
-
-        if(drag){
-
-            p.style.left=
-                clamp(
-                    e.clientX-dx,
-                    0,
-                    Math.max(
-                        0,
-                        window.innerWidth-
-                        p.offsetWidth
-                    )
-                )+"px";
-
-
-            p.style.top=
-                clamp(
-                    e.clientY-dy,
-                    0,
-                    Math.max(
-                        0,
-                        window.innerHeight-
-                        p.offsetHeight
-                    )
-                )+"px";
-        }
-
-
-        if(resizing){
-
-            p.style.width=
-                clamp(
-                    rw+
-                    e.clientX-
-                    rx,
-                    350,
-                    window.innerWidth
-                )+"px";
-
-
-            p.style.height=
-                clamp(
-                    rh+
-                    e.clientY-
-                    ry,
-                    220,
-                    window.innerHeight
-                )+"px";
-        }
-    }
-);
-
-
-document.addEventListener(
-    "mouseup",
-    ()=>{
-
-        if(
-            drag||
-            resizing
-        ){
-            save();
-        }
-
-
-        drag=false;
-
-        resizing=false;
-
-        frame.style.pointerEvents=
-            "auto";
-    }
-);
-
-
-/* =========================================================
-   RESIZING
-   ========================================================= */
-
-resize.addEventListener(
-    "mousedown",
-    e=>{
-
-        resizing=true;
-
-        rw=p.offsetWidth;
-        rh=p.offsetHeight;
-
-        rx=e.clientX;
-        ry=e.clientY;
-
-        frame.style.pointerEvents=
-            "none";
-
-        e.preventDefault();
-    }
-);
-
-
-/* =========================================================
-   BUTTON ACTIONS
-   ========================================================= */
-
-back.onclick=()=>{
-
-    try{
-        frame.contentWindow.history.back();
-    }catch(e){}
 };
-
-
-forward.onclick=()=>{
-
-    try{
-        frame.contentWindow.history.forward();
-    }catch(e){}
-};
-
-
-reload.onclick=
-    reloadPage;
-
-
-theme.onclick=()=>{
-
-    dark=!dark;
-
-    applyTheme();
-
-    toast(
-        dark
-            ?"Dark mode"
-            :"Light mode"
-    );
-};
-
-
-opacity.onclick=()=>{
-
-    const vals=[
-        "1",
-        ".9",
-        ".8",
-        ".7",
-        ".6"
-    ];
-
-
-    let i=
-        vals.indexOf(
-            p.style.opacity
-        );
-
-
-    if(i<0)i=0;
-
-
-    p.style.opacity=
-        vals[
-            (i+1)%vals.length
-        ];
-
-
-    save();
-
-
-    toast(
-        "Opacity "+
-        Math.round(
-            parseFloat(
-                p.style.opacity
-            )*100
-        )+
-        "%"
-    );
-};
-
-
-compact.onclick=()=>{
-
-    compactMode=
-        !compactMode;
-
-    applyCompact();
-
-
-    toast(
-        compactMode
-            ?"Compact toolbar"
-            :"Full toolbar"
-    );
-};
-
-
-miniBtn.onclick=
-    hidePanel;
-
-
-consoleBtn.onclick=
-    createConsole;
-
-
-specialBtn.onclick=()=>{
-
-    if(
-        urlMatches(
-            destinationUrl
-        )
-    ){
-
-        createSpecialPanel();
-
-    }else{
-
-        toast(
-            "Special list unavailable here",
-            "error"
-        );
-    }
-};
-
-
-/* =========================================================
-   FULLSCREEN
-   ========================================================= */
-
-full.onclick=()=>{
-
-    if(!fs){
-
-        p.dataset.prev=
-            JSON.stringify({
-
-                l:p.style.left,
-                t:p.style.top,
-
-                w:p.style.width,
-                h:p.style.height,
-
-                r:p.style.borderRadius
-            });
-
-
-        p.style.left="0";
-        p.style.top="0";
-
-        p.style.width="100vw";
-        p.style.height="100vh";
-
-        p.style.borderRadius="0";
-
-
-        fs=true;
-
-
-        toast("Fullscreen");
-
-    }else{
-
-        let q={};
-
-
-        try{
-
-            q=
-                JSON.parse(
-                    p.dataset.prev||
-                    "{}"
-                );
-
-        }catch(e){}
-
-
-        p.style.left=
-            q.l||
-            "80px";
-
-        p.style.top=
-            q.t||
-            "80px";
-
-        p.style.width=
-            q.w||
-            "820px";
-
-        p.style.height=
-            q.h||
-            "520px";
-
-        p.style.borderRadius=
-            q.r||
-            "14px";
-
-
-        fs=false;
-
-
-        toast("Windowed");
-    }
-
-
-    save();
-};
-
-
-/* =========================================================
-   CLOSE
-   ========================================================= */
-
-close.onclick=()=>{
-
-    if(hideTimer){
-        clearTimeout(hideTimer);
-    }
-
-
-    save();
-
-
-    if(devConsole){
-        devConsole.remove();
-    }
-
-
-    closeSpecialPanel();
-
-
-    const m=
-        document.getElementById(MIN);
-
-    if(m)m.remove();
-
-
-    const t=
-        document.getElementById(TOAST);
-
-    if(t)t.remove();
-
-
-    if(currentTip){
-        currentTip.remove();
-    }
-
-
-    p.remove();
-
-
-    const s=
-        document.getElementById(STYLE);
-
-    if(s)s.remove();
-};
-
-
-/* =========================================================
-   IFRAME URL DETECTION
-   ========================================================= */
-
-frame.addEventListener(
-    "load",
-    ()=>{
-
-        let detected=
-            destinationUrl;
-
-
-        try{
-
-            if(
-                frame.contentWindow&&
-                frame.contentWindow.location.href
-            ){
-
-                detected=
-                    frame.contentWindow
-                        .location
-                        .href;
-            }
-
-        }catch(e){
-
-            /*
-             Cross-origin pages cannot expose
-             their current URL to the bookmarklet.
-             In that case we use destinationUrl.
-            */
-
-            detected=
-                destinationUrl;
-        }
-
-
-        updateSpecialButton(
-            detected
-        );
-    }
-);
-
-
-/* =========================================================
-   KEYBOARD SHORTCUTS
-   ========================================================= */
-
-document.addEventListener(
-    "keydown",
-    e=>{
-
-        const target=e.target;
-
-
-        if(
-            target.tagName==="INPUT"||
-            target.tagName==="TEXTAREA"||
-            target.isContentEditable
-        ){
-
-            return;
-        }
-
-
-        const key=
-            normalizeKey(e);
-
-
-        const act=
-            binds[key];
-
-
-        if(act){
-
-            e.preventDefault();
-
-            runAction(act);
-
-            return;
-        }
-
-
-        const k=
-            e.key.toLowerCase();
-
-
-        /* P = show/hide */
-
-        if(k==="p"){
-
-            e.preventDefault();
-
-            togglePanel();
-
-            return;
-        }
-
-
-        /* M = minimize/hide */
-
-        if(k==="m"){
-
-            e.preventDefault();
-
-            hidePanel();
-
-            return;
-        }
-
-
-        /* F = fullscreen */
-
-        if(k==="f"){
-
-            e.preventDefault();
-
-            full.click();
-
-            return;
-        }
-
-
-        /* R = reload */
-
-        if(k==="r"){
-
-            e.preventDefault();
-
-            reloadPage();
-
-            return;
-        }
-
-
-        /* / = console */
-
-        if(k==="/"){
-
-            e.preventDefault();
-
-            createConsole();
-
-            return;
-        }
-
-
-        /* ESC */
-
-        if(k==="escape"){
-
-            e.preventDefault();
-
-
-            if(specialPanel){
-
-                closeSpecialPanel();
-
-                return;
-            }
-
-
-            if(devConsole){
-
-                devConsole.remove();
-
-                devConsole=null;
-
-                commandInput=null;
-
-                commandMenu=null;
-
-                return;
-            }
-
-
-            hidePanel();
-        }
-    }
-);
-
-
-/* =========================================================
-   WINDOW RESIZE
-   ========================================================= */
-
-window.addEventListener(
-    "resize",
-    ()=>{
-
-        if(!fs){
-
-            p.style.left=
-                clamp(
-                    parseInt(
-                        p.style.left
-                    )||0,
-                    0,
-                    Math.max(
-                        0,
-                        window.innerWidth-
-                        p.offsetWidth
-                    )
-                )+"px";
-
-
-            p.style.top=
-                clamp(
-                    parseInt(
-                        p.style.top
-                    )||0,
-                    0,
-                    Math.max(
-                        0,
-                        window.innerHeight-
-                        p.offsetHeight
-                    )
-                )+"px";
-        }
-
-
-        if(specialPanel){
-
-            const r=
-                specialPanel
-                    .getBoundingClientRect();
-
-
-            specialPanel.style.left=
-                clamp(
-                    r.left,
-                    0,
-                    Math.max(
-                        0,
-                        window.innerWidth-
-                        r.width
-                    )
-                )+"px";
-
-
-            specialPanel.style.top=
-                clamp(
-                    r.top,
-                    0,
-                    Math.max(
-                        0,
-                        window.innerHeight-
-                        r.height
-                    )
-                )+"px";
-
-
-            specialPanel.style.transform=
-                "none";
-        }
-    }
-);
-
-
-/* =========================================================
-   START
-   ========================================================= */
-
-applyTheme();
-
-applyCompact();
-
-
-frame.dataset.destination=
-    destinationUrl;
-
-
-urlInput.value=
-    destinationUrl;
-
-
-frame.src=
-    destinationUrl;
-
-
-updateSpecialButton(
-    destinationUrl
-);
-
-
-startLoading();
-
-
-save();
-
-
-/* =========================================================
-   DONE
-   ========================================================= */
-
-toast(
-    "CiphAnon Panel loaded",
-    "success"
-);
 
 })();
-void 0
