@@ -12,6 +12,20 @@ const SPECIAL="ciphAnonSpecial";
 const STYLE="ciphAnonStyle";
 const TOAST="ciphAnonToast";
 
+/* =========================================================
+   Z-INDEX LAYERS
+   ========================================================= */
+
+const Z_MAIN=2147483644;
+const Z_MINI=2147483643;
+const Z_CONSOLE=2147483645;
+const Z_TOAST=2147483646;
+const Z_SPECIAL=2147483647;
+
+/* =========================================================
+   DEFAULT SETTINGS
+   ========================================================= */
+
 const DEFAULT_DESTINATION=
 "https://ciphanonstudios.github.io/CiphAnonStudios-v12";
 
@@ -21,12 +35,14 @@ const DEFAULT_LOADING_URL="about:blank";
 
 /* =========================================================
    SPECIAL PAGE
-   Change only url if you want the button on another page.
    ========================================================= */
 
 const SPECIAL_PAGE={
-    url:DEFAULT_DESTINATION,
+    url:
+    "https://ciphanonstudios.github.io/CiphAnonStudios-v12",
+
     match:"exact",
+
     buttonText:"☰",
     buttonTip:"Open Special List",
     panelTitle:"My List",
@@ -52,20 +68,32 @@ const cleanup=[];
 let instanceAlive=true;
 
 function listen(target,event,fn,options){
-    target.addEventListener(event,fn,options);
+
+    target.addEventListener(
+        event,
+        fn,
+        options
+    );
 
     cleanup.push(()=>{
         try{
-            target.removeEventListener(event,fn,options);
+            target.removeEventListener(
+                event,
+                fn,
+                options
+            );
         }catch(e){}
     });
 }
 
-window.__CIPHANON_CLEANUP=()=>{
+const cleanupFunction=()=>{
+
     instanceAlive=false;
 
     cleanup.forEach(fn=>{
-        try{fn()}catch(e){}
+        try{
+            fn();
+        }catch(e){}
     });
 
     [
@@ -76,16 +104,26 @@ window.__CIPHANON_CLEANUP=()=>{
         STYLE,
         TOAST
     ].forEach(id=>{
-        const el=document.getElementById(id);
-        if(el)el.remove();
+
+        const el=
+            document.getElementById(id);
+
+        if(el){
+            el.remove();
+        }
+
     });
 
-    if(window.__CIPHANON_CLEANUP===cleanupFunction){
+    if(
+        window.__CIPHANON_CLEANUP===
+        cleanupFunction
+    ){
         delete window.__CIPHANON_CLEANUP;
     }
 };
 
-const cleanupFunction=window.__CIPHANON_CLEANUP;
+window.__CIPHANON_CLEANUP=
+    cleanupFunction;
 
 /* =========================================================
    LOAD SAVED SETTINGS
@@ -94,27 +132,51 @@ const cleanupFunction=window.__CIPHANON_CLEANUP;
 let saved={};
 
 try{
-    saved=JSON.parse(
-        localStorage.getItem(KEY)||"{}"
-    );
+
+    saved=
+        JSON.parse(
+            localStorage.getItem(KEY)||"{}"
+        );
+
 }catch(e){
+
     saved={};
+
 }
 
 /* =========================================================
-   CREATE MAIN ELEMENTS
+   MAIN ELEMENTS
    ========================================================= */
 
-const p=document.createElement("div");
-const bar=document.createElement("div");
-const title=document.createElement("div");
-const tools=document.createElement("div");
-const body=document.createElement("div");
-const controls=document.createElement("div");
-const frame=document.createElement("iframe");
-const overlay=document.createElement("iframe");
-const resize=document.createElement("div");
-const specialBtn=document.createElement("button");
+const p=
+    document.createElement("div");
+
+const bar=
+    document.createElement("div");
+
+const title=
+    document.createElement("div");
+
+const tools=
+    document.createElement("div");
+
+const body=
+    document.createElement("div");
+
+const controls=
+    document.createElement("div");
+
+const frame=
+    document.createElement("iframe");
+
+const overlay=
+    document.createElement("iframe");
+
+const resize=
+    document.createElement("div");
+
+const specialBtn=
+    document.createElement("button");
 
 p.id=ID;
 
@@ -122,26 +184,60 @@ p.id=ID;
    MAIN PANEL STYLE
    ========================================================= */
 
-Object.assign(p.style,{
-    position:"fixed",
-    left:saved.left||"80px",
-    top:saved.top||"80px",
-    width:saved.width||"820px",
-    height:saved.height||"520px",
-    minWidth:"360px",
-    minHeight:"220px",
-    background:"#fff",
-    border:"1px solid rgba(255,106,0,.65)",
-    borderRadius:"14px",
-    zIndex:"2147483647",
-    display:"flex",
-    flexDirection:"column",
-    overflow:"hidden",
-    boxShadow:"0 20px 60px rgba(0,0,0,.35)",
-    fontFamily:"Inter,Arial,sans-serif",
-    transition:"box-shadow .2s,opacity .2s",
-    opacity:saved.opacity||"1"
-});
+Object.assign(
+    p.style,
+    {
+        position:"fixed",
+
+        left:
+        saved.left||
+        "80px",
+
+        top:
+        saved.top||
+        "80px",
+
+        width:
+        saved.width||
+        "820px",
+
+        height:
+        saved.height||
+        "520px",
+
+        minWidth:"360px",
+        minHeight:"220px",
+
+        background:"#fff",
+
+        border:
+        "1px solid rgba(255,106,0,.65)",
+
+        borderRadius:"14px",
+
+        zIndex:
+        String(Z_MAIN),
+
+        display:"flex",
+
+        flexDirection:"column",
+
+        overflow:"hidden",
+
+        boxShadow:
+        "0 20px 60px rgba(0,0,0,.35)",
+
+        fontFamily:
+        "Inter,Arial,sans-serif",
+
+        transition:
+        "box-shadow .2s,opacity .2s",
+
+        opacity:
+        saved.opacity||
+        "1"
+    }
+);
 
 /* =========================================================
    HEADER
@@ -191,10 +287,13 @@ tools.style.cssText=
 
 function btn(id,text,tip){
 
-    const b=document.createElement("button");
+    const b=
+        document.createElement("button");
 
     b.id=id;
+
     b.textContent=text;
+
     b.title=tip;
 
     b.style.cssText=
@@ -224,56 +323,72 @@ function btn(id,text,tip){
    HEADER BUTTONS
    ========================================================= */
 
-const back=btn(
-    "capBack",
-    "←",
-    "Back"
-);
+const back=
+    btn(
+        "capBack",
+        "←",
+        "Back"
+    );
 
-const forward=btn(
-    "capForward",
-    "→",
-    "Forward"
-);
+const forward=
+    btn(
+        "capForward",
+        "→",
+        "Forward"
+    );
 
-const reload=btn(
-    "capReload",
-    "↻",
-    "Reload"
-);
+const reload=
+    btn(
+        "capReload",
+        "↻",
+        "Reload"
+    );
 
-const theme=btn(
-    "capTheme",
-    "☾",
-    "Toggle theme"
-);
+const theme=
+    btn(
+        "capTheme",
+        "☾",
+        "Toggle theme"
+    );
 
-const opacity=btn(
-    "capOpacity",
-    "◐",
-    "Opacity"
-);
+const opacity=
+    btn(
+        "capOpacity",
+        "◐",
+        "Opacity"
+    );
 
-const miniBtn=btn(
-    "capMini",
-    "−",
-    "Minimize"
-);
+const miniBtn=
+    btn(
+        "capMini",
+        "−",
+        "Minimize"
+    );
 
-const full=btn(
-    "capFull",
-    "⛶",
-    "Fullscreen"
-);
+const full=
+    btn(
+        "capFull",
+        "⛶",
+        "Fullscreen"
+    );
 
-const consoleBtn=btn(
-    "capConsole",
-    "⌘",
-    "Developer console"
-);
+const consoleBtn=
+    btn(
+        "capConsole",
+        "⌘",
+        "Developer console"
+    );
 
-specialBtn.textContent=SPECIAL_PAGE.buttonText;
-specialBtn.title=SPECIAL_PAGE.buttonTip;
+/* =========================================================
+   SPECIAL BUTTON
+   ========================================================= */
+
+specialBtn.textContent=
+    SPECIAL_PAGE.buttonText;
+
+specialBtn.title=
+    SPECIAL_PAGE.buttonTip;
+
 specialBtn.style.cssText=
 "width:30px;"+
 "height:28px;"+
@@ -295,11 +410,16 @@ specialBtn.onmouseleave=()=>{
     specialBtn.style.background="#292929";
 };
 
-const close=btn(
-    "capClose",
-    "×",
-    "Close"
-);
+/* =========================================================
+   CLOSE
+   ========================================================= */
+
+const close=
+    btn(
+        "capClose",
+        "×",
+        "Close"
+    );
 
 close.onmouseenter=()=>{
     close.style.background="#d33";
@@ -308,6 +428,10 @@ close.onmouseenter=()=>{
 close.onmouseleave=()=>{
     close.style.background="#292929";
 };
+
+/* =========================================================
+   ADD HEADER BUTTONS
+   ========================================================= */
 
 [
     back,
@@ -320,9 +444,14 @@ close.onmouseleave=()=>{
     consoleBtn,
     specialBtn,
     close
-].forEach(x=>tools.appendChild(x));
+].forEach(x=>{
+    tools.appendChild(x);
+});
 
-bar.append(title,tools);
+bar.append(
+    title,
+    tools
+);
 
 /* =========================================================
    BODY
@@ -336,7 +465,7 @@ body.style.cssText=
 "overflow:hidden";
 
 /* =========================================================
-   URL / CONTROL BAR
+   CONTROL BAR
    ========================================================= */
 
 controls.style.cssText=
@@ -350,13 +479,21 @@ controls.style.cssText=
 "padding:5px 8px;"+
 "box-sizing:border-box";
 
+/* =========================================================
+   ACTION BUTTON
+   ========================================================= */
+
 function action(text,tip,fn){
 
-    const b=document.createElement("button");
+    const b=
+        document.createElement("button");
 
     b.textContent=text;
+
     b.title=tip;
-    b.className="ciphAction";
+
+    b.className=
+        "ciphAction";
 
     b.style.cssText=
     "border:1px solid #ddd;"+
@@ -384,14 +521,23 @@ function action(text,tip,fn){
     return b;
 }
 
-/* URL input */
+/* =========================================================
+   URL INPUT
+   ========================================================= */
 
-const urlInput=document.createElement("input");
+const urlInput=
+    document.createElement("input");
 
 urlInput.type="text";
-urlInput.value=saved.destinationUrl||DEFAULT_DESTINATION;
+
+urlInput.value=
+    saved.destinationUrl||
+    DEFAULT_DESTINATION;
+
 urlInput.spellcheck=false;
-urlInput.title="Destination URL";
+
+urlInput.title=
+    "Destination URL";
 
 urlInput.style.cssText=
 "flex:1;"+
@@ -405,93 +551,12 @@ urlInput.style.cssText=
 "background:#fff;"+
 "color:#222";
 
-/* Go */
+/* =========================================================
+   STATUS
+   ========================================================= */
 
-const goButton=action(
-    "Go",
-    "Navigate to URL",
-    ()=>{
-        navigate(urlInput.value);
-    }
-);
-
-/* Copy */
-
-const copyButton=action(
-    "⧉",
-    "Copy destination URL",
-    async()=>{
-
-        try{
-
-            await navigator.clipboard.writeText(
-                frame.dataset.destination||DEFAULT_DESTINATION
-            );
-
-            status.textContent="URL copied";
-
-        }catch(e){
-
-            urlInput.select();
-
-            try{
-                document.execCommand("copy");
-                status.textContent="URL copied";
-            }catch(err){
-                status.textContent="Copy unavailable";
-            }
-
-        }
-
-    }
-);
-
-/* Position buttons */
-
-const tl=action(
-    "TL",
-    "Move top-left",
-    ()=>{
-        move("12px","60px");
-    }
-);
-
-const tr=action(
-    "TR",
-    "Move top-right",
-    ()=>{
-        move(
-            "calc(100vw - "+p.offsetWidth+"px - 12px)",
-            "60px"
-        );
-    }
-);
-
-const bl=action(
-    "BL",
-    "Move bottom-left",
-    ()=>{
-        move(
-            "12px",
-            "calc(100vh - "+p.offsetHeight+"px - 12px)"
-        );
-    }
-);
-
-const br=action(
-    "BR",
-    "Move bottom-right",
-    ()=>{
-        move(
-            "calc(100vw - "+p.offsetWidth+"px - 12px)",
-            "calc(100vh - "+p.offsetHeight+"px - 12px)"
-        );
-    }
-);
-
-/* Status */
-
-const status=document.createElement("span");
+const status=
+    document.createElement("span");
 
 status.style.cssText=
 "margin-left:auto;"+
@@ -502,7 +567,178 @@ status.style.cssText=
 "text-overflow:ellipsis;"+
 "max-width:180px";
 
-status.textContent="Starting...";
+status.textContent=
+    "Starting...";
+
+/* =========================================================
+   NAVIGATION
+   ========================================================= */
+
+function navigate(url){
+
+    if(!url)return;
+
+    let finalUrl=
+        String(url).trim();
+
+    if(
+        !/^https?:\/\//i.test(finalUrl)&&
+        finalUrl!=="about:blank"
+    ){
+        finalUrl=
+            "https://"+finalUrl;
+    }
+
+    destinationUrl=
+        finalUrl;
+
+    frame.dataset.destination=
+        finalUrl;
+
+    urlInput.value=
+        finalUrl;
+
+    updateSpecialButton(
+        finalUrl
+    );
+
+    status.textContent=
+        "Loading...";
+
+    startLoadingOverlay();
+
+    frame.src=
+        finalUrl;
+
+    save();
+}
+
+/* =========================================================
+   GO BUTTON
+   ========================================================= */
+
+const goButton=
+    action(
+        "Go",
+        "Navigate to URL",
+        ()=>{
+            navigate(
+                urlInput.value
+            );
+        }
+    );
+
+/* =========================================================
+   COPY BUTTON
+   ========================================================= */
+
+const copyButton=
+    action(
+        "⧉",
+        "Copy destination URL",
+        async()=>{
+
+            const value=
+                frame.dataset.destination||
+                DEFAULT_DESTINATION;
+
+            try{
+
+                await navigator.clipboard.writeText(
+                    value
+                );
+
+                status.textContent=
+                    "URL copied";
+
+            }catch(e){
+
+                urlInput.select();
+
+                try{
+
+                    document.execCommand(
+                        "copy"
+                    );
+
+                    status.textContent=
+                        "URL copied";
+
+                }catch(err){
+
+                    status.textContent=
+                        "Copy unavailable";
+
+                }
+
+            }
+
+        }
+    );
+
+/* =========================================================
+   POSITION BUTTONS
+   ========================================================= */
+
+const tl=
+    action(
+        "TL",
+        "Move top-left",
+        ()=>{
+            move(
+                "12px",
+                "60px"
+            );
+        }
+    );
+
+const tr=
+    action(
+        "TR",
+        "Move top-right",
+        ()=>{
+            move(
+                "calc(100vw - "+
+                p.offsetWidth+
+                "px - 12px)",
+                "60px"
+            );
+        }
+    );
+
+const bl=
+    action(
+        "BL",
+        "Move bottom-left",
+        ()=>{
+            move(
+                "12px",
+                "calc(100vh - "+
+                p.offsetHeight+
+                "px - 12px)"
+            );
+        }
+    );
+
+const br=
+    action(
+        "BR",
+        "Move bottom-right",
+        ()=>{
+            move(
+                "calc(100vw - "+
+                p.offsetWidth+
+                "px - 12px)",
+                "calc(100vh - "+
+                p.offsetHeight+
+                "px - 12px)"
+            );
+        }
+    );
+
+/* =========================================================
+   BUILD CONTROL BAR
+   ========================================================= */
 
 controls.append(
     urlInput,
@@ -516,7 +752,7 @@ controls.append(
 );
 
 /* =========================================================
-   IFRAME
+   MAIN IFRAME
    ========================================================= */
 
 frame.style.cssText=
@@ -568,7 +804,7 @@ resize.style.cssText=
 "z-index:10";
 
 /* =========================================================
-   BUILD
+   BUILD MAIN PANEL
    ========================================================= */
 
 body.append(
@@ -589,9 +825,13 @@ document.body.appendChild(p);
    VARIABLES
    ========================================================= */
 
-let dark=saved.dark==="1";
+let dark=
+    saved.dark==="1";
+
 let fs=false;
+
 let drag=false;
+
 let resizing=false;
 
 let dx=0;
@@ -599,6 +839,7 @@ let dy=0;
 
 let rw=0;
 let rh=0;
+
 let rx=0;
 let ry=0;
 
@@ -617,14 +858,22 @@ let loadingUrl=
     DEFAULT_LOADING_URL;
 
 let minDelay=
-    Number.isFinite(Number(saved.minDelay))
+    Number.isFinite(
+        Number(saved.minDelay)
+    )
     ?Number(saved.minDelay)
     :DEFAULT_MIN_DELAY;
 
 let maxDelay=
-    Number.isFinite(Number(saved.maxDelay))
+    Number.isFinite(
+        Number(saved.maxDelay)
+    )
     ?Number(saved.maxDelay)
     :DEFAULT_MAX_DELAY;
+
+/* =========================================================
+   KEYBINDS
+   ========================================================= */
 
 const defaultBinds={
     "ctrl+shift+p":"panel",
@@ -635,11 +884,12 @@ const defaultBinds={
     "escape":"close"
 };
 
-const binds=Object.assign(
-    {},
-    defaultBinds,
-    saved.binds||{}
-);
+const binds=
+    Object.assign(
+        {},
+        defaultBinds,
+        saved.binds||{}
+    );
 
 /* =========================================================
    SAVE
@@ -648,29 +898,46 @@ const binds=Object.assign(
 function getState(){
 
     return{
+
         left:p.style.left,
         top:p.style.top,
+
         width:p.style.width,
         height:p.style.height,
+
         opacity:p.style.opacity,
-        dark:dark?"1":"0",
+
+        dark:
+            dark?"1":"0",
+
         binds:binds,
+
         destinationUrl:
             frame.dataset.destination||
             destinationUrl,
-        loadingUrl:loadingUrl,
-        minDelay:minDelay,
-        maxDelay:maxDelay
+
+        loadingUrl:
+            loadingUrl,
+
+        minDelay:
+            minDelay,
+
+        maxDelay:
+            maxDelay
     };
 }
 
 function save(){
 
     try{
+
         localStorage.setItem(
             KEY,
-            JSON.stringify(getState())
+            JSON.stringify(
+                getState()
+            )
         );
+
     }catch(e){}
 
 }
@@ -682,9 +949,12 @@ function save(){
 function move(left,top){
 
     p.style.left=left;
+
     p.style.top=top;
 
-    requestAnimationFrame(save);
+    requestAnimationFrame(
+        save
+    );
 }
 
 /* =========================================================
@@ -693,16 +963,26 @@ function move(left,top){
 
 function applyTheme(){
 
-    const bg=dark?"#161616":"#fff";
-    const fg=dark?"#eee":"#222";
-    const cb=dark?"#202020":"#f5f5f5";
-    const border=dark?"#333":"#ddd";
+    const bg=
+        dark?"#161616":"#fff";
+
+    const fg=
+        dark?"#eee":"#222";
+
+    const cb=
+        dark?"#202020":"#f5f5f5";
+
+    const border=
+        dark?"#333":"#ddd";
 
     p.style.background=bg;
+
     body.style.background=bg;
 
     controls.style.background=cb;
-    controls.style.borderColor=border;
+
+    controls.style.borderColor=
+        border;
 
     status.style.color=
         dark?"#777":"#888";
@@ -713,11 +993,14 @@ function applyTheme(){
         dark?"#202020":"#fff";
 
     urlInput.style.color=fg;
-    urlInput.style.borderColor=border;
+
+    urlInput.style.borderColor=
+        border;
 
     document
     .querySelectorAll(
-        "#"+ID+" .ciphAction"
+        "#"+ID+
+        " .ciphAction"
     )
     .forEach(x=>{
 
@@ -725,7 +1008,9 @@ function applyTheme(){
             dark?"#222":"#fff";
 
         x.style.color=fg;
-        x.style.borderColor=border;
+
+        x.style.borderColor=
+            border;
 
     });
 
@@ -733,44 +1018,59 @@ function applyTheme(){
         applyConsoleTheme();
     }
 
+    applySpecialTheme();
+
     save();
 }
 
 /* =========================================================
-   CONSOLE THEME
+   SPECIAL THEME
    ========================================================= */
 
-function applyConsoleTheme(){
+function applySpecialTheme(){
 
-    if(!devConsole)return;
+    if(!special)return;
 
-    const bg=dark?"#111":"#f7f7f7";
-    const fg=dark?"#eee":"#222";
-    const border=dark?"#333":"#ddd";
+    const bg=
+        dark?"#161616":"#fff";
 
-    devConsole.style.background=bg;
-    devConsole.style.color=fg;
+    const fg=
+        dark?"#eee":"#222";
 
-    if(commandInput){
+    const itemBg=
+        dark?"#202020":"#f5f5f5";
 
-        commandInput.style.background=
-            dark?"#1d1d1d":"#fff";
+    const border=
+        dark?"#333":"#ddd";
 
-        commandInput.style.color=fg;
-        commandInput.style.borderColor=border;
+    special.style.background=bg;
 
-    }
+    special.style.color=fg;
 
-    if(commandMenu){
+    specialList.style.background=bg;
 
-        commandMenu.style.background=
-            dark?"#191919":"#fff";
+    specialList
+    .querySelectorAll(
+        ".ciphSpecialItem"
+    )
+    .forEach(item=>{
 
-        commandMenu.style.color=fg;
-        commandMenu.style.borderColor=border;
+        item.style.background=
+            itemBg;
 
-    }
+        item.style.color=
+            fg;
 
+        item.style.borderColor=
+            border;
+
+    });
+
+    specialFoot.style.color=
+        dark?"#777":"#888";
+
+    specialFoot.style.borderColor=
+        border;
 }
 
 /* =========================================================
@@ -779,11 +1079,16 @@ function applyConsoleTheme(){
 
 function toast(message){
 
-    let t=document.getElementById(TOAST);
+    let t=
+        document.getElementById(
+            TOAST
+        );
 
     if(!t){
 
-        t=document.createElement("div");
+        t=
+            document.createElement("div");
+
         t.id=TOAST;
 
         t.style.cssText=
@@ -797,7 +1102,9 @@ function toast(message){
         "background:#181818;"+
         "color:#fff;"+
         "font:12px Arial,sans-serif;"+
-        "z-index:2147483647;"+
+        "z-index:"+
+        Z_TOAST+
+        ";"+
         "box-shadow:0 10px 30px rgba(0,0,0,.35);"+
         "opacity:0;"+
         "transition:.2s;"+
@@ -806,18 +1113,26 @@ function toast(message){
         document.body.appendChild(t);
     }
 
-    t.textContent=message;
+    t.textContent=
+        message;
+
     t.style.opacity="1";
 
-    clearTimeout(t._timer);
+    clearTimeout(
+        t._timer
+    );
 
-    t._timer=setTimeout(()=>{
-        t.style.opacity="0";
-    },1600);
+    t._timer=
+        setTimeout(
+            ()=>{
+                t.style.opacity="0";
+            },
+            1600
+        );
 }
 
 /* =========================================================
-   LOADING PAGE
+   DEFAULT LOADING PAGE
    ========================================================= */
 
 function createDefaultLoadingPage(){
@@ -853,114 +1168,107 @@ function createDefaultLoadingPage(){
 }
 
 /* =========================================================
-   START LOADING
+   LOADING
    ========================================================= */
 
 function startLoadingOverlay(){
 
-    clearTimeout(hideTimer);
+    clearTimeout(
+        hideTimer
+    );
 
-    overlay.style.display="block";
-    overlay.style.opacity="1";
+    overlay.style.display=
+        "block";
+
+    overlay.style.opacity=
+        "1";
 
     if(
-        loadingUrl &&
+        loadingUrl&&
         loadingUrl!=="about:blank"
     ){
 
         overlay.srcdoc="";
-        overlay.src=loadingUrl;
+
+        overlay.src=
+            loadingUrl;
 
     }else{
 
         overlay.src="";
+
         createDefaultLoadingPage();
 
     }
 
-    const low=Math.max(
-        0,
-        Math.min(
-            minDelay,
-            maxDelay
-        )
-    );
-
-    const high=Math.max(
-        low,
+    const low=
         Math.max(
-            minDelay,
-            maxDelay
-        )
-    );
+            0,
+            Math.min(
+                minDelay,
+                maxDelay
+            )
+        );
 
-    const delay=Math.floor(
-        Math.random()*
-        (high-low+1)
-    )+low;
+    const high=
+        Math.max(
+            low,
+            Math.max(
+                minDelay,
+                maxDelay
+            )
+        );
+
+    const delay=
+        Math.floor(
+            Math.random()*
+            (high-low+1)
+        )+low;
 
     status.textContent=
-        "Loading "+(delay/1000).toFixed(1)+"s";
+        "Loading "+
+        (delay/1000).toFixed(1)+
+        "s";
 
-    hideTimer=setTimeout(()=>{
+    hideTimer=
+        setTimeout(
+            ()=>{
 
-        overlay.style.opacity="0";
+                overlay.style.opacity=
+                    "0";
 
-        status.textContent="Ready";
+                status.textContent=
+                    "Ready";
 
-        setTimeout(()=>{
+                setTimeout(
+                    ()=>{
 
-            overlay.style.display="none";
+                        overlay.style.display=
+                            "none";
 
-            overlay.src="";
-            overlay.srcdoc="";
+                        overlay.src="";
 
-        },550);
+                        overlay.srcdoc="";
 
-    },delay);
+                    },
+                    550
+                );
+
+            },
+            delay
+        );
 }
 
 /* =========================================================
-   NAVIGATION
+   RELOAD
    ========================================================= */
-
-function navigate(url){
-
-    if(!url)return;
-
-    let finalUrl=url.trim();
-
-    if(
-        !/^https?:\/\//i.test(finalUrl) &&
-        finalUrl!=="about:blank"
-    ){
-        finalUrl="https://"+finalUrl;
-    }
-
-    destinationUrl=finalUrl;
-
-    frame.dataset.destination=
-        finalUrl;
-
-    urlInput.value=
-        finalUrl;
-
-    updateSpecialButton(
-        finalUrl
-    );
-
-    status.textContent="Loading...";
-
-    startLoadingOverlay();
-
-    frame.src=finalUrl;
-
-    save();
-}
 
 function reloadPage(){
 
-    status.textContent="Reloading...";
+    status.textContent=
+        "Reloading...";
+
+    startLoadingOverlay();
 
     try{
 
@@ -973,62 +1281,44 @@ function reloadPage(){
             destinationUrl;
 
     }
-
-    startLoadingOverlay();
 }
+
+/* =========================================================
+   BACK / FORWARD
+   ========================================================= */
 
 function goBack(){
 
     try{
+
         frame.contentWindow.history.back();
+
     }catch(e){
-        toast("Back unavailable");
+
+        toast(
+            "Back unavailable"
+        );
+
     }
 }
 
 function goForward(){
 
     try{
+
         frame.contentWindow.history.forward();
+
     }catch(e){
-        toast("Forward unavailable");
+
+        toast(
+            "Forward unavailable"
+        );
+
     }
 }
 
 /* =========================================================
-   FRAME LOAD
-   ========================================================= */
-
-listen(frame,"load",()=>{
-
-    if(!instanceAlive)return;
-
-    status.textContent="Ready";
-
-    try{
-
-        const current=
-            frame.contentWindow.location.href;
-
-        updateSpecialButton(current);
-
-        if(current){
-            urlInput.value=current;
-        }
-
-    }catch(e){
-
-        updateSpecialButton(
-            frame.dataset.destination||
-            destinationUrl
-        );
-
-    }
-
-});
-
-/* =========================================================
-   SPECIAL PAGE DETECTION
+   SPECIAL URL DETECTION
    ========================================================= */
 
 function normalizeUrl(url){
@@ -1043,19 +1333,27 @@ function normalizeUrl(url){
 
         u.hash="";
 
-        return u.href.replace(/\/$/,"");
+        return u.href.replace(
+            /\/$/,
+            ""
+        );
 
     }catch(e){
 
         return String(url)
-            .replace(/\/$/,"");
+            .replace(
+                /\/$/,
+                ""
+            );
 
     }
 }
 
 function isSpecialPage(url){
 
-    if(!url)return false;
+    if(!url){
+        return false;
+    }
 
     const current=
         normalizeUrl(url);
@@ -1069,14 +1367,22 @@ function isSpecialPage(url){
         SPECIAL_PAGE.match===
         "startsWith"
     ){
-        return current.indexOf(target)===0;
+
+        return current.indexOf(
+            target
+        )===0;
+
     }
 
     if(
         SPECIAL_PAGE.match===
         "contains"
     ){
-        return current.indexOf(target)!==-1;
+
+        return current.indexOf(
+            target
+        )!==-1;
+
     }
 
     return current===target;
@@ -1099,29 +1405,38 @@ function updateSpecialButton(url){
    SPECIAL PANEL
    ========================================================= */
 
-const special=document.createElement("div");
+const special=
+    document.createElement("div");
 
-special.id=SPECIAL;
+special.id=
+    SPECIAL;
 
 special.style.cssText=
 "position:fixed;"+
 "left:50%;"+
 "top:50%;"+
 "transform:translate(-50%,-50%);"+
-"width:380px;"+
+"width:420px;"+
 "max-width:calc(100vw - 24px);"+
 "max-height:calc(100vh - 24px);"+
 "background:#fff;"+
 "color:#222;"+
 "border:1px solid rgba(255,106,0,.65);"+
 "border-radius:14px;"+
-"box-shadow:0 20px 70px rgba(0,0,0,.4);"+
-"z-index:2147483646;"+
+"box-shadow:0 20px 70px rgba(0,0,0,.45);"+
+"z-index:"+
+Z_SPECIAL+
+";"+
 "display:none;"+
 "overflow:hidden;"+
 "font-family:Inter,Arial,sans-serif";
 
-const specialHead=document.createElement("div");
+/* =========================================================
+   SPECIAL HEADER
+   ========================================================= */
+
+const specialHead=
+    document.createElement("div");
 
 specialHead.style.cssText=
 "height:44px;"+
@@ -1133,7 +1448,8 @@ specialHead.style.cssText=
 "cursor:move;"+
 "user-select:none";
 
-const specialTitle=document.createElement("div");
+const specialTitle=
+    document.createElement("div");
 
 specialTitle.textContent=
     SPECIAL_PAGE.panelTitle;
@@ -1144,10 +1460,14 @@ specialTitle.style.cssText=
 "font-weight:700;"+
 "color:#ff6a00";
 
-const specialClose=document.createElement("button");
+const specialClose=
+    document.createElement("button");
 
-specialClose.textContent="×";
-specialClose.title="Close";
+specialClose.textContent=
+    "×";
+
+specialClose.title=
+    "Close Special List";
 
 specialClose.style.cssText=
 "width:30px;"+
@@ -1159,7 +1479,8 @@ specialClose.style.cssText=
 "font-size:17px;"+
 "cursor:pointer";
 
-specialClose.onclick=closeSpecial;
+specialClose.onclick=
+    closeSpecial;
 
 specialClose.onmouseenter=()=>{
     specialClose.style.background="#d33";
@@ -1174,50 +1495,84 @@ specialHead.append(
     specialClose
 );
 
-const specialList=document.createElement("div");
+/* =========================================================
+   SPECIAL LIST
+   ========================================================= */
+
+const specialList=
+    document.createElement("div");
 
 specialList.style.cssText=
 "padding:12px;"+
-"max-height:400px;"+
+"max-height:420px;"+
 "overflow:auto";
 
-SPECIAL_PAGE.items.forEach((item,index)=>{
+SPECIAL_PAGE.items.forEach(
+    (item,index)=>{
 
-    const itemEl=document.createElement("div");
+        const itemEl=
+            document.createElement("div");
 
-    itemEl.textContent=
-        (index+1)+". "+item;
+        itemEl.className=
+            "ciphSpecialItem";
 
-    itemEl.style.cssText=
-    "padding:11px;"+
-    "margin-bottom:8px;"+
-    "background:#f5f5f5;"+
-    "border:1px solid #ddd;"+
-    "border-radius:8px;"+
-    "font-size:13px;"+
-    "line-height:1.4;"+
-    "transition:.15s";
+        itemEl.textContent=
+            (index+1)+
+            ". "+
+            item;
 
-    itemEl.onmouseenter=()=>{
-        itemEl.style.borderColor="#ff6a00";
-        itemEl.style.transform="translateX(2px)";
-    };
+        itemEl.style.cssText=
+        "padding:11px;"+
+        "margin-bottom:8px;"+
+        "background:#f5f5f5;"+
+        "border:1px solid #ddd;"+
+        "border-radius:8px;"+
+        "font-size:13px;"+
+        "line-height:1.4;"+
+        "transition:.15s";
 
-    itemEl.onmouseleave=()=>{
-        itemEl.style.borderColor="#ddd";
-        itemEl.style.transform="none";
-    };
+        itemEl.onmouseenter=()=>{
 
-    specialList.appendChild(itemEl);
+            itemEl.style.borderColor=
+                "#ff6a00";
 
-});
+            itemEl.style.transform=
+                "translateX(2px)";
 
-const specialFoot=document.createElement("div");
+        };
+
+        itemEl.onmouseleave=()=>{
+
+            itemEl.style.borderColor=
+                dark?"#333":"#ddd";
+
+            itemEl.style.transform=
+                "none";
+
+        };
+
+        specialList.appendChild(
+            itemEl
+        );
+
+    }
+);
+
+/* =========================================================
+   SPECIAL FOOTER
+   ========================================================= */
+
+const specialFoot=
+    document.createElement("div");
 
 specialFoot.textContent=
     SPECIAL_PAGE.items.length+
     " item"+
-    (SPECIAL_PAGE.items.length===1?"":"s");
+    (
+        SPECIAL_PAGE.items.length===1
+        ?""
+        :"s"
+    );
 
 specialFoot.style.cssText=
 "padding:8px 12px;"+
@@ -1231,7 +1586,9 @@ special.append(
     specialFoot
 );
 
-document.body.appendChild(special);
+document.body.appendChild(
+    special
+);
 
 /* =========================================================
    SPECIAL FUNCTIONS
@@ -1245,22 +1602,32 @@ function openSpecial(){
             destinationUrl
         )
     ){
-        toast("Special list unavailable on this page");
+
+        toast(
+            "Special list unavailable"
+        );
+
         return;
     }
 
-    special.style.display="block";
+    special.style.display=
+        "block";
+
+    special.style.zIndex=
+        String(Z_SPECIAL);
 }
 
 function closeSpecial(){
 
-    special.style.display="none";
+    special.style.display=
+        "none";
 }
 
-specialBtn.onclick=openSpecial;
+specialBtn.onclick=
+    openSpecial;
 
 /* =========================================================
-   SPECIAL PANEL DRAG
+   SPECIAL DRAG
    ========================================================= */
 
 let specialDrag=false;
@@ -1271,7 +1638,12 @@ specialHead.addEventListener(
     "mousedown",
     e=>{
 
-        if(e.target===specialClose)return;
+        if(
+            e.target===
+            specialClose
+        ){
+            return;
+        }
 
         specialDrag=true;
 
@@ -1279,13 +1651,15 @@ specialHead.addEventListener(
             special.getBoundingClientRect();
 
         specialDX=
-            e.clientX-rect.left;
+            e.clientX-
+            rect.left;
 
         specialDY=
-            e.clientY-rect.top;
+            e.clientY-
+            rect.top;
 
-        special.style.transform="none";
-
+        special.style.transform=
+            "none";
     }
 );
 
@@ -1294,7 +1668,9 @@ listen(
     "mousemove",
     e=>{
 
-        if(!specialDrag)return;
+        if(!specialDrag){
+            return;
+        }
 
         special.style.left=
             Math.max(
@@ -1302,7 +1678,8 @@ listen(
                 Math.min(
                     window.innerWidth-
                     special.offsetWidth,
-                    e.clientX-specialDX
+                    e.clientX-
+                    specialDX
                 )
             )+"px";
 
@@ -1312,10 +1689,10 @@ listen(
                 Math.min(
                     window.innerHeight-
                     special.offsetHeight,
-                    e.clientY-specialDY
+                    e.clientY-
+                    specialDY
                 )
             )+"px";
-
     }
 );
 
@@ -1328,29 +1705,79 @@ listen(
 );
 
 /* =========================================================
-   URL INPUT
+   FRAME LOAD
    ========================================================= */
 
-urlInput.addEventListener(
-    "keydown",
-    e=>{
+listen(
+    frame,
+    "load",
+    ()=>{
 
-        if(e.key==="Enter"){
-            navigate(urlInput.value);
+        if(!instanceAlive){
+            return;
+        }
+
+        status.textContent=
+            "Ready";
+
+        try{
+
+            const current=
+                frame.contentWindow.location.href;
+
+            updateSpecialButton(
+                current
+            );
+
+            if(current){
+                urlInput.value=
+                    current;
+            }
+
+        }catch(e){
+
+            updateSpecialButton(
+                frame.dataset.destination||
+                destinationUrl
+            );
+
         }
 
     }
 );
 
 /* =========================================================
-   HEADER BUTTON ACTIONS
+   URL INPUT
    ========================================================= */
 
-back.onclick=goBack;
+listen(
+    urlInput,
+    "keydown",
+    e=>{
 
-forward.onclick=goForward;
+        if(e.key==="Enter"){
 
-reload.onclick=reloadPage;
+            navigate(
+                urlInput.value
+            );
+
+        }
+
+    }
+);
+
+/* =========================================================
+   HEADER ACTIONS
+   ========================================================= */
+
+back.onclick=
+    goBack;
+
+forward.onclick=
+    goForward;
+
+reload.onclick=
+    reloadPage;
 
 theme.onclick=()=>{
 
@@ -1362,7 +1789,9 @@ theme.onclick=()=>{
     applyTheme();
 
     status.textContent=
-        dark?"Dark mode":"Light mode";
+        dark
+        ?"Dark mode"
+        :"Light mode";
 };
 
 opacity.onclick=()=>{
@@ -1380,7 +1809,9 @@ opacity.onclick=()=>{
             p.style.opacity
         );
 
-    if(index<0)index=0;
+    if(index<0){
+        index=0;
+    }
 
     index++;
 
@@ -1397,7 +1828,8 @@ opacity.onclick=()=>{
             parseFloat(
                 p.style.opacity
             )*100
-        )+"%";
+        )+
+        "%";
 
     save();
 };
@@ -1408,21 +1840,32 @@ opacity.onclick=()=>{
 
 miniBtn.onclick=()=>{
 
-    p.style.display="none";
+    p.style.display=
+        "none";
 
     let existing=
-        document.getElementById(MIN);
+        document.getElementById(
+            MIN
+        );
 
     if(existing){
-        existing.style.display="block";
+
+        existing.style.display=
+            "block";
+
         return;
     }
 
-    const mini=document.createElement("button");
+    const mini=
+        document.createElement("button");
 
     mini.id=MIN;
-    mini.textContent="C";
-    mini.title="Restore CiphAnon Panel";
+
+    mini.textContent=
+        "C";
+
+    mini.title=
+        "Restore CiphAnon Panel";
 
     mini.style.cssText=
     "position:fixed;"+
@@ -1436,28 +1879,41 @@ miniBtn.onclick=()=>{
     "color:#ff6a00;"+
     "font-weight:800;"+
     "font-size:16px;"+
-    "z-index:2147483647;"+
+    "z-index:"+
+    Z_MINI+
+    ";"+
     "cursor:pointer;"+
     "box-shadow:0 10px 30px rgba(0,0,0,.3)";
 
     mini.onmouseenter=()=>{
-        mini.style.background="#ff6a00";
-        mini.style.color="#fff";
+
+        mini.style.background=
+            "#ff6a00";
+
+        mini.style.color=
+            "#fff";
     };
 
     mini.onmouseleave=()=>{
-        mini.style.background="#181818";
-        mini.style.color="#ff6a00";
+
+        mini.style.background=
+            "#181818";
+
+        mini.style.color=
+            "#ff6a00";
     };
 
     mini.onclick=()=>{
 
-        p.style.display="flex";
-        mini.remove();
+        p.style.display=
+            "flex";
 
+        mini.remove();
     };
 
-    document.body.appendChild(mini);
+    document.body.appendChild(
+        mini
+    );
 };
 
 /* =========================================================
@@ -1474,13 +1930,18 @@ full.onclick=()=>{
                 top:p.style.top,
                 width:p.style.width,
                 height:p.style.height,
-                borderRadius:p.style.borderRadius
+                borderRadius:
+                    p.style.borderRadius
             });
 
         p.style.left="0";
+
         p.style.top="0";
+
         p.style.width="100vw";
+
         p.style.height="100vh";
+
         p.style.borderRadius="0";
 
         fs=true;
@@ -1493,11 +1954,13 @@ full.onclick=()=>{
         let previous={};
 
         try{
+
             previous=
                 JSON.parse(
                     p.dataset.previousState||
                     "{}"
                 );
+
         }catch(e){}
 
         p.style.left=
@@ -1524,54 +1987,67 @@ full.onclick=()=>{
 
         status.textContent=
             "Windowed";
-
     }
 
     save();
 };
 
 /* =========================================================
-   CLOSE
+   CLOSE PANEL
    ========================================================= */
 
-close.onclick=()=>{
+function closePanel(){
 
     if(hideTimer){
-        clearTimeout(hideTimer);
+        clearTimeout(
+            hideTimer
+        );
     }
 
     save();
 
     closeConsole();
 
+    closeSpecial();
+
     p.remove();
-    special.remove();
 
     const mini=
-        document.getElementById(MIN);
+        document.getElementById(
+            MIN
+        );
 
     if(mini){
         mini.remove();
     }
 
     instanceAlive=false;
+}
 
-};
+close.onclick=
+    closePanel;
 
 /* =========================================================
-   DEVELOPER CONSOLE
+   CONSOLE
    ========================================================= */
 
-function addConsoleLine(text,type){
+function addConsoleLine(
+    text,
+    type
+){
 
-    if(!devConsole)return;
+    if(!devConsole){
+        return;
+    }
 
     const output=
         devConsole.querySelector(
             ".ciphConsoleOutput"
         );
 
-    if(!output)return;
+    if(!output){
+        return;
+    }
 
     const line=
         document.createElement("div");
@@ -1579,7 +2055,8 @@ function addConsoleLine(text,type){
     line.className=
         "ciphConsoleLine";
 
-    line.textContent=text;
+    line.textContent=
+        text;
 
     line.style.cssText=
     "padding:3px 0;"+
@@ -1601,7 +2078,9 @@ function addConsoleLine(text,type){
         line.style.color="#ff6a00";
     }
 
-    output.appendChild(line);
+    output.appendChild(
+        line
+    );
 
     output.scrollTop=
         output.scrollHeight;
@@ -1614,35 +2093,118 @@ function closeConsole(){
         devConsole.remove();
 
         devConsole=null;
-        commandInput=null;
-        commandMenu=null;
 
+        commandInput=null;
+
+        commandMenu=null;
     }
 }
 
+/* =========================================================
+   CONSOLE THEME
+   ========================================================= */
+
+function applyConsoleTheme(){
+
+    if(!devConsole){
+        return;
+    }
+
+    const bg=
+        dark?"#111":"#f7f7f7";
+
+    const fg=
+        dark?"#eee":"#222";
+
+    const border=
+        dark?"#333":"#ddd";
+
+    devConsole.style.background=
+        bg;
+
+    devConsole.style.color=
+        fg;
+
+    if(commandInput){
+
+        commandInput.style.background=
+            dark?"#1d1d1d":"#fff";
+
+        commandInput.style.color=
+            fg;
+
+        commandInput.style.borderColor=
+            border;
+    }
+
+    if(commandMenu){
+
+        commandMenu.style.background=
+            dark?"#191919":"#fff";
+
+        commandMenu.style.color=
+            fg;
+
+        commandMenu.style.borderColor=
+            border;
+    }
+}
+
+/* =========================================================
+   COMMANDS
+   ========================================================= */
+
 const commands=[
+
     ["/help","Show commands"],
+
     ["/reload","Reload the destination"],
+
     ["/destination URL","Change destination"],
+
     ["/loading URL","Change loading page"],
-    ["/random-delay 3000 10000","Set loading delay"],
+
+    ["/random-delay 3000 10000",
+     "Set loading delay"],
+
     ["/theme","Toggle theme"],
+
     ["/opacity","Change opacity"],
+
     ["/fullscreen","Toggle fullscreen"],
+
     ["/minimize","Minimize panel"],
+
     ["/close","Close panel"],
+
     ["/special","Open special list"],
-    ["/close-special","Close special list"],
+
+    ["/close-special",
+     "Close special list"],
+
     ["/url","Show current URL"],
-    ["/bind ctrl+shift+p console","Create keybind"],
-    ["/unbind ctrl+shift+p","Remove keybind"],
+
+    ["/bind ctrl+shift+p console",
+     "Create keybind"],
+
+    ["/unbind ctrl+shift+p",
+     "Remove keybind"],
+
     ["/binds","Show keybinds"],
+
     ["/clear","Clear console"]
+
 ];
+
+/* =========================================================
+   COMMAND MENU
+   ========================================================= */
 
 function updateCommandMenu(value){
 
-    if(!commandMenu)return;
+    if(!commandMenu){
+        return;
+    }
 
     commandMenu.innerHTML="";
 
@@ -1650,7 +2212,10 @@ function updateCommandMenu(value){
         !value||
         !value.startsWith("/")
     ){
-        commandMenu.style.display="none";
+
+        commandMenu.style.display=
+            "none";
+
         return;
     }
 
@@ -1667,19 +2232,24 @@ function updateCommandMenu(value){
 
     if(!matches.length){
 
-        commandMenu.style.display="none";
-        return;
+        commandMenu.style.display=
+            "none";
 
+        return;
     }
 
     matches.forEach(
         (item,index)=>{
 
             const b=
-                document.createElement("button");
+                document.createElement(
+                    "button"
+                );
 
             b.type="button";
-            b.dataset.command=item[0];
+
+            b.dataset.command=
+                item[0];
 
             b.style.cssText=
             "display:block;"+
@@ -1720,15 +2290,16 @@ function updateCommandMenu(value){
                 updateCommandMenu(
                     commandInput.value
                 );
-
             };
 
-            commandMenu.appendChild(b);
-
+            commandMenu.appendChild(
+                b
+            );
         }
     );
 
-    commandMenu.style.display="block";
+    commandMenu.style.display=
+        "block";
 }
 
 /* =========================================================
@@ -1741,18 +2312,22 @@ function runCommand(raw){
         raw.trim().split(/\s+/);
 
     const command=
-        (parts.shift()||"")
-        .toLowerCase();
+        (
+            parts.shift()||
+            ""
+        ).toLowerCase();
 
     const args=parts;
 
     if(command==="/help"){
 
         commands.forEach(x=>{
+
             addConsoleLine(
-                x[0]+" — "+x[1],
+                x[0]+" | "+x[1],
                 ""
             );
+
         });
 
         return;
@@ -1779,13 +2354,18 @@ function runCommand(raw){
 
             new URL(url);
 
-            destinationUrl=url;
+            destinationUrl=
+                url;
 
-            frame.dataset.destination=url;
+            frame.dataset.destination=
+                url;
 
-            urlInput.value=url;
+            urlInput.value=
+                url;
 
-            updateSpecialButton(url);
+            updateSpecialButton(
+                url
+            );
 
             save();
 
@@ -1800,7 +2380,6 @@ function runCommand(raw){
                 "Invalid URL.",
                 "error"
             );
-
         }
 
         return;
@@ -1824,6 +2403,7 @@ function runCommand(raw){
         if(url==="about:blank"){
 
             loadingUrl=url;
+
             save();
 
             addConsoleLine(
@@ -1853,7 +2433,6 @@ function runCommand(raw){
                 "Invalid URL.",
                 "error"
             );
-
         }
 
         return;
@@ -1861,8 +2440,11 @@ function runCommand(raw){
 
     if(command==="/random-delay"){
 
-        const a=Number(args[0]);
-        const b=Number(args[1]);
+        const a=
+            Number(args[0]);
+
+        const b=
+            Number(args[1]);
 
         if(
             !Number.isFinite(a)||
@@ -1879,8 +2461,11 @@ function runCommand(raw){
             return;
         }
 
-        minDelay=Math.min(a,b);
-        maxDelay=Math.max(a,b);
+        minDelay=
+            Math.min(a,b);
+
+        maxDelay=
+            Math.max(a,b);
 
         save();
 
@@ -1899,42 +2484,49 @@ function runCommand(raw){
     if(command==="/theme"){
 
         theme.click();
+
         return;
     }
 
     if(command==="/opacity"){
 
         opacity.click();
+
         return;
     }
 
     if(command==="/fullscreen"){
 
         full.click();
+
         return;
     }
 
     if(command==="/minimize"){
 
         miniBtn.click();
+
         return;
     }
 
     if(command==="/close"){
 
-        close.click();
+        closePanel();
+
         return;
     }
 
     if(command==="/special"){
 
         openSpecial();
+
         return;
     }
 
     if(command==="/close-special"){
 
         closeSpecial();
+
         return;
     }
 
@@ -1952,12 +2544,16 @@ function runCommand(raw){
     if(command==="/bind"){
 
         const key=
-            (args.shift()||"")
-            .toLowerCase();
+            (
+                args.shift()||
+                ""
+            ).toLowerCase();
 
         const actionName=
-            (args.shift()||"")
-            .toLowerCase();
+            (
+                args.shift()||
+                ""
+            ).toLowerCase();
 
         const allowed=[
             "panel",
@@ -1970,7 +2566,9 @@ function runCommand(raw){
 
         if(
             !key||
-            !allowed.includes(actionName)
+            !allowed.includes(
+                actionName
+            )
         ){
 
             addConsoleLine(
@@ -1981,12 +2579,15 @@ function runCommand(raw){
             return;
         }
 
-        binds[key]=actionName;
+        binds[key]=
+            actionName;
 
         save();
 
         addConsoleLine(
-            key+" → "+actionName,
+            key+
+            " -> "+
+            actionName,
             "success"
         );
 
@@ -1996,15 +2597,18 @@ function runCommand(raw){
     if(command==="/unbind"){
 
         const key=
-            (args.shift()||"")
-            .toLowerCase();
+            (
+                args.shift()||
+                ""
+            ).toLowerCase();
 
         delete binds[key];
 
         save();
 
         addConsoleLine(
-            "Removed "+key,
+            "Removed "+
+            key,
             "success"
         );
 
@@ -2017,7 +2621,9 @@ function runCommand(raw){
         .forEach(key=>{
 
             addConsoleLine(
-                key+" → "+binds[key],
+                key+
+                " -> "+
+                binds[key],
                 ""
             );
 
@@ -2028,13 +2634,16 @@ function runCommand(raw){
 
     if(command==="/clear"){
 
-        const output=
-            devConsole.querySelector(
-                ".ciphConsoleOutput"
-            );
+        if(devConsole){
 
-        if(output){
-            output.innerHTML="";
+            const output=
+                devConsole.querySelector(
+                    ".ciphConsoleOutput"
+                );
+
+            if(output){
+                output.innerHTML="";
+            }
         }
 
         return;
@@ -2055,14 +2664,15 @@ function createConsole(){
     if(devConsole){
 
         commandInput.focus();
-        return;
 
+        return;
     }
 
     devConsole=
         document.createElement("div");
 
-    devConsole.id=CONSOLE;
+    devConsole.id=
+        CONSOLE;
 
     devConsole.style.cssText=
     "position:absolute;"+
@@ -2070,7 +2680,9 @@ function createConsole(){
     "right:10px;"+
     "bottom:10px;"+
     "height:270px;"+
-    "z-index:20;"+
+    "z-index:"+
+    Z_CONSOLE+
+    ";"+
     "border:1px solid #ff6a00;"+
     "border-radius:10px;"+
     "background:#f7f7f7;"+
@@ -2104,7 +2716,8 @@ function createConsole(){
     const consoleClose=
         document.createElement("button");
 
-    consoleClose.textContent="×";
+    consoleClose.textContent=
+        "×";
 
     consoleClose.style.cssText=
     "border:0;"+
@@ -2146,7 +2759,8 @@ function createConsole(){
     const prompt=
         document.createElement("span");
 
-    prompt.textContent=">";
+    prompt.textContent=
+        ">";
 
     prompt.style.cssText=
     "padding:7px 0 0 2px;"+
@@ -2156,11 +2770,17 @@ function createConsole(){
     commandInput=
         document.createElement("input");
 
-    commandInput.type="text";
+    commandInput.type=
+        "text";
+
     commandInput.placeholder=
         "Type / for commands...";
-    commandInput.autocomplete="off";
-    commandInput.spellcheck=false;
+
+    commandInput.autocomplete=
+        "off";
+
+    commandInput.spellcheck=
+        false;
 
     commandInput.style.cssText=
     "flex:1;"+
@@ -2252,8 +2872,8 @@ function createConsole(){
             if(e.key==="Escape"){
 
                 closeConsole();
-                return;
 
+                return;
             }
 
             if(e.key==="Enter"){
@@ -2268,7 +2888,9 @@ function createConsole(){
                         "command"
                     );
 
-                    runCommand(value);
+                    runCommand(
+                        value
+                    );
                 }
 
                 commandInput.value="";
@@ -2276,6 +2898,7 @@ function createConsole(){
                 commandMenu.style.display=
                     "none";
 
+                return;
             }
 
             if(e.key==="Tab"){
@@ -2296,39 +2919,45 @@ function createConsole(){
                     updateCommandMenu(
                         commandInput.value
                     );
-
                 }
-
             }
-
         }
     );
 }
-
-/* =========================================================
-   CONSOLE BUTTON
-   ========================================================= */
 
 consoleBtn.onclick=
     createConsole;
 
 /* =========================================================
-   KEYBOARD SHORTCUTS
+   KEYBOARD
    ========================================================= */
 
 function normalizeKey(e){
 
     const parts=[];
 
-    if(e.ctrlKey)parts.push("ctrl");
-    if(e.shiftKey)parts.push("shift");
-    if(e.altKey)parts.push("alt");
-    if(e.metaKey)parts.push("meta");
+    if(e.ctrlKey){
+        parts.push("ctrl");
+    }
+
+    if(e.shiftKey){
+        parts.push("shift");
+    }
+
+    if(e.altKey){
+        parts.push("alt");
+    }
+
+    if(e.metaKey){
+        parts.push("meta");
+    }
 
     let key=
         e.key.toLowerCase();
 
-    if(key===" ")key="space";
+    if(key===" "){
+        key="space";
+    }
 
     if(
         key!=="control"&&
@@ -2379,7 +3008,7 @@ function runAction(actionName){
 
     else if(actionName==="close"){
 
-        close.click();
+        closePanel();
 
     }
 }
@@ -2389,10 +3018,16 @@ listen(
     "keydown",
     e=>{
 
-        if(!instanceAlive)return;
+        if(!instanceAlive){
+            return;
+        }
 
-        const target=e.target;
-        const tag=target&&target.tagName;
+        const target=
+            e.target;
+
+        const tag=
+            target&&
+            target.tagName;
 
         if(
             tag==="INPUT"||
@@ -2414,16 +3049,18 @@ listen(
             );
 
             return;
-
         }
 
-        /*
-           Simple shortcuts
-        */
+        if(
+            !e.ctrlKey&&
+            !e.shiftKey&&
+            !e.altKey
+        ){
 
-        if(!e.ctrlKey&&!e.shiftKey&&!e.altKey){
-
-            if(e.key==="p"||e.key==="P"){
+            if(
+                e.key==="p"||
+                e.key==="P"
+            ){
 
                 e.preventDefault();
 
@@ -2434,7 +3071,10 @@ listen(
 
             }
 
-            else if(e.key==="m"||e.key==="M"){
+            else if(
+                e.key==="m"||
+                e.key==="M"
+            ){
 
                 e.preventDefault();
 
@@ -2442,7 +3082,10 @@ listen(
 
             }
 
-            else if(e.key==="f"||e.key==="F"){
+            else if(
+                e.key==="f"||
+                e.key==="F"
+            ){
 
                 e.preventDefault();
 
@@ -2450,7 +3093,10 @@ listen(
 
             }
 
-            else if(e.key==="r"||e.key==="R"){
+            else if(
+                e.key==="r"||
+                e.key==="R"
+            ){
 
                 e.preventDefault();
 
@@ -2458,7 +3104,9 @@ listen(
 
             }
 
-            else if(e.key==="/"){
+            else if(
+                e.key==="/"
+            ){
 
                 e.preventDefault();
 
@@ -2466,10 +3114,27 @@ listen(
 
             }
 
-            else if(e.key==="Escape"){
+            else if(
+                e.key==="Escape"
+            ){
 
-                closeSpecial();
-                closeConsole();
+                if(
+                    special.style.display===
+                    "block"
+                ){
+
+                    closeSpecial();
+
+                }else if(devConsole){
+
+                    closeConsole();
+
+                }else{
+
+                    p.style.display=
+                        "none";
+
+                }
 
             }
 
@@ -2479,12 +3144,10 @@ listen(
 );
 
 /* =========================================================
-   DRAG MAIN PANEL
+   MAIN PANEL DRAG
    ========================================================= */
 
-const dragBar=bar;
-
-dragBar.addEventListener(
+bar.addEventListener(
     "mousedown",
     e=>{
 
@@ -2506,7 +3169,6 @@ dragBar.addEventListener(
 
         frame.style.pointerEvents=
             "none";
-
     }
 );
 
@@ -2536,7 +3198,6 @@ listen(
                         e.clientY-dy
                     )
                 )+"px";
-
         }
 
         if(resizing){
@@ -2545,16 +3206,17 @@ listen(
                 Math.max(
                     360,
                     rw+
-                    (e.clientX-rx)
+                    e.clientX-
+                    rx
                 )+"px";
 
             p.style.height=
                 Math.max(
                     220,
                     rh+
-                    (e.clientY-ry)
+                    e.clientY-
+                    ry
                 )+"px";
-
         }
 
     }
@@ -2565,16 +3227,19 @@ listen(
     "mouseup",
     ()=>{
 
-        if(drag||resizing){
+        if(
+            drag||
+            resizing
+        ){
             save();
         }
 
         drag=false;
+
         resizing=false;
 
         frame.style.pointerEvents=
             "auto";
-
     }
 );
 
@@ -2588,17 +3253,22 @@ resize.addEventListener(
 
         resizing=true;
 
-        rw=p.offsetWidth;
-        rh=p.offsetHeight;
+        rw=
+            p.offsetWidth;
 
-        rx=e.clientX;
-        ry=e.clientY;
+        rh=
+            p.offsetHeight;
+
+        rx=
+            e.clientX;
+
+        ry=
+            e.clientY;
 
         frame.style.pointerEvents=
             "none";
 
         e.preventDefault();
-
     }
 );
 
@@ -2616,7 +3286,8 @@ bar.addEventListener(
             return;
         }
 
-        const touch=e.touches[0];
+        const touch=
+            e.touches[0];
 
         drag=true;
 
@@ -2627,9 +3298,10 @@ bar.addEventListener(
         dy=
             touch.clientY-
             p.offsetTop;
-
     },
-    {passive:true}
+    {
+        passive:true
+    }
 );
 
 listen(
@@ -2637,9 +3309,12 @@ listen(
     "touchmove",
     e=>{
 
-        if(!drag)return;
+        if(!drag){
+            return;
+        }
 
-        const touch=e.touches[0];
+        const touch=
+            e.touches[0];
 
         p.style.left=
             Math.max(
@@ -2662,7 +3337,9 @@ listen(
             )+"px";
 
     },
-    {passive:true}
+    {
+        passive:true
+    }
 );
 
 listen(
@@ -2670,10 +3347,11 @@ listen(
     "touchend",
     ()=>{
 
-        if(drag)save();
+        if(drag){
+            save();
+        }
 
         drag=false;
-
     }
 );
 
@@ -2686,16 +3364,19 @@ listen(
     "resize",
     ()=>{
 
-        const left=parseInt(
-            p.style.left
-        )||0;
+        const left=
+            parseInt(
+                p.style.left
+            )||0;
 
-        const top=parseInt(
-            p.style.top
-        )||0;
+        const top=
+            parseInt(
+                p.style.top
+            )||0;
 
         if(
-            left+p.offsetWidth>
+            left+
+            p.offsetWidth>
             window.innerWidth
         ){
 
@@ -2705,11 +3386,11 @@ listen(
                     window.innerWidth-
                     p.offsetWidth
                 )+"px";
-
         }
 
         if(
-            top+p.offsetHeight>
+            top+
+            p.offsetHeight>
             window.innerHeight
         ){
 
@@ -2719,7 +3400,6 @@ listen(
                     window.innerHeight-
                     p.offsetHeight
                 )+"px";
-
         }
 
     }
@@ -2744,12 +3424,6 @@ updateSpecialButton(
 
 applyTheme();
 
-beginStartup();
-
-/* =========================================================
-   START
-   ========================================================= */
-
 function beginStartup(){
 
     frame.dataset.destination=
@@ -2762,6 +3436,8 @@ function beginStartup(){
 
     save();
 }
+
+beginStartup();
 
 toast(
     "CiphAnon Panel loaded"
